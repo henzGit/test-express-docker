@@ -1,0 +1,18 @@
+App:
+  env: default
+  language: en
+  apiVersion: v1.0
+  server:
+    port: 3000
+  fileStorage:
+    dirPath: img/uploaded/
+  kvs:
+    host: kvs
+    port: 6379
+    indexKey: redisIndexKey
+  queue:
+    host: queue
+    port: 5672
+    queueName: test_queue
+  worker:
+    numberWorker: 2

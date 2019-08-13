@@ -1,0 +1,5 @@
+export enum JOB_STATUS  {
+  READY_FOR_PROCESSING = 0,
+  PROCESSING,
+  COMPLETE
+}
