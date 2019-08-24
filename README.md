@@ -14,8 +14,10 @@ Get thumbnail given an imageId
 2. run `yarn install`
 
 # Available commands
-- start application: `yarn start`
-- start application (dev-mode): `yarn run dev`
+- Run system: `docker-compose up`
+- Run API only: `docker-compose up api`
+- Run worker only: `docker-compose up worker`
+- start application (local-dev): `yarn run dev`
 - run test: `yarn test`
 
 # Available paths
