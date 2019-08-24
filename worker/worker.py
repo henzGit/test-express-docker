@@ -3,8 +3,7 @@ from pika import BlockingConnection, ConnectionParameters, BasicProperties
 from logging import Logger
 from redis import Redis
 from typing import Union, List, Tuple
-from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
-    JOB_STATUS_INDEX, FILE_PATH_INDEX, ERROR_SAME_JOB_STATUS
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, ERROR_SAME_JOB_STATUS
 from job_status_enum import JobStatusEnum
 
 
