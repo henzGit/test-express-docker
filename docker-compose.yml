@@ -46,6 +46,7 @@ services:
     volumes:
       - ./worker:/app
       - ./config:/config
+      - ./img:/img
     depends_on:
       - kvs
       - queue
