@@ -2,8 +2,8 @@ import os
 from pika import BlockingConnection, ConnectionParameters, BasicProperties
 from logging import Logger
 from redis import Redis
-from typing import Union, List
-from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY
+from typing import Union, List, Tuple
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, JOB_STATUS_INDEX, FILE_PATH_INDEX
 from job_status_enum import JobStatusEnum
 
 class Worker:
@@ -12,6 +12,7 @@ class Worker:
         self.logger = logger
         self.redisClient: Union[Redis, None] = None
         self.queueConn: Union[BlockingConnection, None] = None
+        self.encoding = "utf-8"
 
     def getRedisClient(self) -> Redis:
         """
@@ -47,21 +48,30 @@ class Worker:
             exit(1)
         return self.queueConn
 
-    def getJobInfoFromRedis(self, jobId: str) -> List:
+    def getJobInfoFromRedis(self, jobId: bytes) -> Tuple[int, str]:
         """
         Get job information from Redis
         :param jobId: id of the job
-        :return: job info of the job containing jobstatus anf filepath
+        :return: job info of the job containing jobstatus and filepath
         """
         try:
             self.logger.info("--------------------- getting data from redis -----------------------")
-
-            jobInfo: List = self.getRedisClient().hmget(jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY])
-            self.logger.info("------------------------ data from redis: %s ------------------------" % jobInfo)
+            currentJobStatus, filePath = self.getRedisClient().hmget(jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY])
+            currentJobStatus: int = currentJobStatus.decode(self.encoding)
+            filePath: str = filePath.decode(self.encoding)
+            self.logger.info("-------------------- data from redis: [%s,%s] ----------" % (currentJobStatus, filePath))
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
-        return jobInfo
+        return currentJobStatus, filePath
+
+    def updateJobStatus(self, jobStatus: JobStatusEnum) -> bool:
+        """
+        Update job status into Redis
+        :param jobStatus: new job status
+        :return: True if successful else false
+        """
+        return True
 
     def executeProcess(self, channel, method_frame, header_frame: BasicProperties, body: bytes):
         """
@@ -72,17 +82,22 @@ class Worker:
         :param header_frame: header frame of the message
         :param body: body of the message
         """
-        jobId: str = body.decode("utf-8")
+        jobId: str = body.decode(self.encoding)
         self.logger.info("------------------------- receiving job: %s -----------------------" % jobId)
 
         # Get data from redis
-        jobInfo: List = self.getJobInfoFromRedis(jobId)
+        currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
 
         # Update job status in redis to ongoing
+        # jobStatusUpdateFlg = self.updateJobStatus(JobStatusEnum.PROCESSING)
 
         # Use ImageMagick to make thumbnail
 
+        # Put thumbnail into thumbnail folder
+
         # Update Job status in redis to finished
+        # jobStatusUpdateFlg = self.updateJobStatus(JobStatusEnum.COMPLETE)
+
 
         # acknowledge message if treatment is finished
         self.logger.info("-------------------------  job %s is finished -----------------------" % jobId)

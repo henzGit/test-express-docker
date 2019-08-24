@@ -2,11 +2,11 @@ import unittest
 from worker import Worker
 from helper import setupLogging
 from typing import Dict, Hashable, Any
-from pika import BlockingConnection, ConnectionParameters
+from pika import BlockingConnection
 from logging import Logger
 from redis import Redis
-from unittest.mock import patch, MagicMock, Mock
-from typing import Union, List
+from unittest.mock import patch, MagicMock
+from typing import List, Tuple
 
 
 class TestWorker(unittest.TestCase):
@@ -41,9 +41,10 @@ class TestWorker(unittest.TestCase):
 
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedis(self, mockGetRedisClient: MagicMock):
-        returnValueFunc: List = [b'0', b'img/uploaded/1566620014076_test.png']
-        mockGetRedisClient.return_value.hmget.return_value = returnValueFunc
-        mockResult: List = self.worker.getJobInfoFromRedis(1)
+        returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png']
+        returnValueFunc: Tuple = ('0', 'img/uploaded/1566620014076_test.png')
+        mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
+        mockResult: Tuple = self.worker.getJobInfoFromRedis(1)
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hmget.assert_called_once()
         self.assertEqual(returnValueFunc, mockResult)
