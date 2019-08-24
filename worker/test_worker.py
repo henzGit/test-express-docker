@@ -9,8 +9,7 @@ from redis import Redis
 from unittest.mock import patch, MagicMock
 from typing import List, Tuple
 from job_status_enum import JobStatusEnum
-from constants import THUMBNAIL_MAX_PIXEL
-
+from constants import THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
 
 class TestWorker(unittest.TestCase):
     logger: Logger = setupLogging()
@@ -22,6 +21,10 @@ class TestWorker(unittest.TestCase):
     worker: Worker = Worker(config, logger)
     exception: Exception = Exception('Boom!')
     jobId: int = 1
+    filePath: str = '/img/uploaded/1566650412191_test.png'
+    thumbnailPath: str = '/img/thumbnail/1566650412191_test.png'
+    width: int = 100
+    height: int = 80
 
     def test_constructor(self):
         self.assertEqual(self.worker.config, self.config)
@@ -167,11 +170,51 @@ class TestWorker(unittest.TestCase):
         self.assertIsInstance(tobeHeight, int)
 
     def test_getThumbnailPath(self):
-        filePath: str = '/img/uploaded/1566650412191_test.png'
-        thumbnailPath: str = self.worker.getThumbnailPath(filePath)
-        filename: str = os.path.basename(filePath)
+        thumbnailPath: str = self.worker.getThumbnailPath(self.filePath)
+        filename: str = os.path.basename(self.filePath)
         tobeThumbnailPath: str = self.config['fileStorage']['thumbnailPath'] + filename
         self.assertEqual(tobeThumbnailPath, thumbnailPath)
+
+    @patch('worker.Image')
+    def test_makeThumbnailExceptionOpenFile(self, mockImage: MagicMock):
+        mockImage.side_effect = self.exception
+        retMakeThumbnail: str = self.worker.makeThumbnail(self.filePath)
+        self.assertEqual(ERROR_PROCESSING_IMAGE, retMakeThumbnail)
+        mockImage.assert_called_once_with(filename=self.filePath)
+        mockImage.resize.assert_not_called()
+        mockImage.save.assert_not_called()
+
+    @patch('worker.Image')
+    def test_makeThumbnailExceptionResizeFile(self, mockImage: MagicMock):
+        mockImgContextManager: MagicMock = MagicMock(width=self.width, height=self.height)
+        mockImgContextManager.resize.side_effect = self.exception
+        mockImage.return_value.__enter__.return_value = mockImgContextManager
+        retMakeThumbnail: str = self.worker.makeThumbnail(self.filePath)
+        self.assertEqual(ERROR_PROCESSING_IMAGE, retMakeThumbnail)
+        mockImage.assert_called_once_with(filename=self.filePath)
+        mockImgContextManager.resize.assert_called_once_with(self.width, self.height)
+        mockImgContextManager.save.assert_not_called()
+
+    @patch('worker.Image')
+    def test_makeThumbnailExceptionSaveFile(self,  mockImage: MagicMock):
+        mockImgContextManager: MagicMock = MagicMock(width=self.width, height=self.height)
+        mockImgContextManager.save.side_effect = self.exception
+        mockImage.return_value.__enter__.return_value = mockImgContextManager
+        retMakeThumbnail: str = self.worker.makeThumbnail(self.filePath)
+        self.assertEqual(ERROR_PROCESSING_IMAGE, retMakeThumbnail)
+        mockImage.assert_called_once_with(filename=self.filePath)
+        mockImgContextManager.resize.assert_called_once_with(self.width, self.height)
+        mockImgContextManager.save.assert_called_once_with(filename=self.thumbnailPath)
+
+    @patch('worker.Image')
+    def test_makeThumbnailSuccessful(self,  mockImage: MagicMock):
+        mockImgContextManager: MagicMock = MagicMock(width=self.width, height=self.height)
+        mockImage.return_value.__enter__.return_value = mockImgContextManager
+        retMakeThumbnail: str = self.worker.makeThumbnail(self.filePath)
+        self.assertEqual(self.thumbnailPath, retMakeThumbnail)
+        mockImage.assert_called_once_with(filename=self.filePath)
+        mockImgContextManager.resize.assert_called_once_with(self.width, self.height)
+        mockImgContextManager.save.assert_called_once_with(filename=self.thumbnailPath)
 
 if __name__ == '__main__':
     unittest.main()
