@@ -10,6 +10,7 @@ from typing import List, Tuple
 from job_status_enum import JobStatusEnum
 from constants import THUMBNAIL_MAX_PIXEL
 
+
 class TestWorker(unittest.TestCase):
     logger: Logger = setupLogging()
     config: Dict[Hashable, Any] = {
@@ -81,7 +82,6 @@ class TestWorker(unittest.TestCase):
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hmget.assert_called_once()
 
-
     @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusUsingDifferentJobStatus(self, mockGetRedisClient: MagicMock):
         returnValueFunc: Tuple = JobStatusEnum.PROCESSING
@@ -113,7 +113,7 @@ class TestWorker(unittest.TestCase):
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hset.assert_called_once()
 
-    def test_findThumbnailSize(self):
+    def test_findThumbnailSizeResizeBothValuesMoreThanMax(self):
         width: int = 772
         height: int = 563
         tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
@@ -123,6 +123,47 @@ class TestWorker(unittest.TestCase):
         self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
         self.assertIsInstance(tobeWidth, int)
         self.assertIsInstance(tobeHeight, int)
+
+    def test_findThumbnailSizeResizeOnlyWidthMoreThanMax(self):
+        width: int = 150
+        height: int = 50
+        tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
+        self.assertEqual(tobeWidth, 75)
+        self.assertEqual(tobeHeight, 25)
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertIsInstance(tobeWidth, int)
+        self.assertIsInstance(tobeHeight, int)
+
+    def test_findThumbnailSizeResizeOnlyHeightMoreThanMax(self):
+        width: int = 80
+        height: int = 120
+        tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
+        self.assertEqual(tobeWidth, 40)
+        self.assertEqual(tobeHeight, 60)
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertIsInstance(tobeWidth, int)
+        self.assertIsInstance(tobeHeight, int)
+
+    def test_findThumbnailSizeResizeBothValuesEqualMax(self):
+        width: int = THUMBNAIL_MAX_PIXEL
+        height: int = THUMBNAIL_MAX_PIXEL
+        tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
+        self.assertEqual(tobeWidth, THUMBNAIL_MAX_PIXEL)
+        self.assertEqual(tobeHeight, THUMBNAIL_MAX_PIXEL)
+        self.assertIsInstance(tobeWidth, int)
+        self.assertIsInstance(tobeHeight, int)
+
+    def test_findThumbnailSizeNoResize(self):
+        width: int = 80
+        height: int = 63
+        tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
+        self.assertEqual(tobeWidth, width)
+        self.assertEqual(tobeHeight, height)
+        self.assertIsInstance(tobeWidth, int)
+        self.assertIsInstance(tobeHeight, int)
+
 
 if __name__ == '__main__':
     unittest.main()
