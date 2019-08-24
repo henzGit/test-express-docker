@@ -3,8 +3,10 @@ from pika import BlockingConnection, ConnectionParameters, BasicProperties
 from logging import Logger
 from redis import Redis
 from typing import Union, List, Tuple
-from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, ERROR_SAME_JOB_STATUS
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
+    THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS
 from job_status_enum import JobStatusEnum
+from wand.image import Image
 
 
 class Worker:
@@ -49,7 +51,7 @@ class Worker:
             exit(1)
         return self.queueConn
 
-    def getJobInfoFromRedis(self, jobId: str) -> Tuple[int, str]:
+    def getJobInfoFromRedis(self, jobId: str) -> Tuple[int, str, str]:
         """
         Get job information from Redis
         :param jobId: id of the job
@@ -57,14 +59,17 @@ class Worker:
         """
         try:
             self.logger.info("--------------------- getting data from redis -----------------------")
-            currentJobStatus, filePath = self.getRedisClient().hmget(jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY])
+            currentJobStatus, filePath, thumbnailPath = self.getRedisClient().hmget(
+                jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY, THUMBNAIL_PATH_REDIS_KEY]
+            )
             currentJobStatus: int = int(currentJobStatus.decode(self.encoding))
             filePath: str = filePath.decode(self.encoding)
+            thumbnailPath: str = thumbnailPath.decode(self.encoding)
             self.logger.info("-------------------- data from redis: [%s,%s] ----------" % (currentJobStatus, filePath))
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
-        return currentJobStatus, filePath
+        return currentJobStatus, filePath, thumbnailPath
 
     def updateJobStatus(self, jobId: str, currentJobStatus: JobStatusEnum, nextJobStatus: JobStatusEnum) \
             -> JobStatusEnum:
@@ -101,16 +106,16 @@ class Worker:
         self.logger.info("------------------------- receiving job: %s -----------------------" % jobId)
 
         # Get data from redis
-        currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
+        currentJobStatus, filePath, thumbnailPath = self.getJobInfoFromRedis(jobId)
 
-        # Update job status in redis to ongoing
+        # Update job status in redis to JobStatusEnum.PROCESSING
         currentJobStatus = self.updateJobStatus(jobId, JobStatusEnum(currentJobStatus), JobStatusEnum.PROCESSING)
 
         # Use ImageMagick to make thumbnail
 
         # Put thumbnail into thumbnail folder
 
-        # Update Job status in redis to finished
+        # Update Job status in redis to JobStatusEnum.COMPLETE
         currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.COMPLETE)
 
         # acknowledge message if treatment is finished
