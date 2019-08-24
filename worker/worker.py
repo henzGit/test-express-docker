@@ -24,10 +24,10 @@ class Worker:
         :return: current or new Redis client instance
         """
         if self.redisClient is not None:
-            self.logger.info(" getting existing redis client ")
+            self.logger.info("getting existing redis client")
             return self.redisClient
         try:
-            self.logger.info(" creating new redis client ")
+            self.logger.info("creating new redis client")
             self.redisClient: Redis = Redis(host=self.config["kvs"]["host"], port=self.config["kvs"]["port"])
         except Exception as exc:
             self.logger.critical(exc)
@@ -40,12 +40,12 @@ class Worker:
         :return: current or new RabbitMQ connection
         """
         if self.queueConn is not None:
-            self.logger.info(" getting existing RabbitMQ connection ")
+            self.logger.info("getting existing RabbitMQ connection ")
             return self.queueConn
         parameters = ConnectionParameters(host=self.config["queue"]["host"],
                                           port=self.config["queue"]["port"])
         try:
-            self.logger.info(" creating new RabbitMQ connection ")
+            self.logger.info("creating new RabbitMQ connection ")
             self.queueConn: BlockingConnection = BlockingConnection(parameters)
         except Exception as exc:
             self.logger.critical(exc)
@@ -59,7 +59,7 @@ class Worker:
         :return: job info of the job containing jobstatus and filepath
         """
         try:
-            self.logger.info(" getting data from redis ")
+            self.logger.info("getting data from redis")
             currentJobStatus, filePath, thumbnailPath = self.getRedisClient().hmget(
                 jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY, THUMBNAIL_PATH_REDIS_KEY]
             )
@@ -67,7 +67,7 @@ class Worker:
             filePath: str = filePath.decode(self.encoding)
             thumbnailPath: str = thumbnailPath.decode(self.encoding)
 
-            self.logger.info(" data from redis: [%s,%s, %s] "% (currentJobStatus, filePath, thumbnailPath))
+            self.logger.info("data from redis: [%s,%s, %s]" % (currentJobStatus, filePath, thumbnailPath))
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
@@ -86,10 +86,9 @@ class Worker:
             self.logger.critical(ERROR_SAME_JOB_STATUS)
             exit(1)
         try:
-            self.logger.info(" updating job status into redis ")
+            self.logger.info("updating job status into redis")
             self.getRedisClient().hset(jobId, JOB_STATUS_REDIS_KEY, nextJobStatus.value)
-            self.logger.info(" successfully updated job status from: %s to: %s "
-                             % (currentJobStatus, nextJobStatus))
+            self.logger.info("successfully updated job status from: %s to: %s" % (currentJobStatus, nextJobStatus))
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
@@ -102,7 +101,7 @@ class Worker:
         :param height: height in pixel
         :return: tuple containing optimal value for width and height
         """
-        self.logger.info(" finding thumbnail size for width: %s and height: %s" % (width, height))
+        self.logger.info("finding thumbnail size for width: %s and height: %s" % (width, height))
         tobeWidth: int = width
         tobeHeight: int = height
         while tobeWidth > THUMBNAIL_MAX_PIXEL or tobeHeight > THUMBNAIL_MAX_PIXEL:
@@ -128,7 +127,7 @@ class Worker:
         :return: path of the resized image
         """
         try:
-            self.logger.info(" opening input image file in %s using Image Magick" % filePath)
+            self.logger.info("opening input image file in %s using Image Magick" % filePath)
             with Image(filename=filePath) as img:
                 originalWidth: int = img.width
                 originalHeight: int = img.height
@@ -138,7 +137,7 @@ class Worker:
                 img.resize(tobeWidth, tobeHeight)
                 img.format = self.thumbnailImgFormat
                 thumbnailPath: str = self.getThumbnailPath(filePath)
-                self.logger.info(" saving thumbnail file into %s " % thumbnailPath)
+                self.logger.info("saving thumbnail file into %s" % thumbnailPath)
                 img.save(filename=thumbnailPath)
         except Exception as exc:
             self.logger.error(exc)
@@ -155,7 +154,7 @@ class Worker:
         :param body: body of the message
         """
         jobId: str = body.decode(self.encoding)
-        self.logger.info(" receiving job: %s " % jobId)
+        self.logger.info("receiving job: %s" % jobId)
 
         # Get data from redis
         currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
@@ -174,20 +173,20 @@ class Worker:
             currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.COMPLETE)
 
         # acknowledge message if treatment is finished
-        self.logger.info("  job %s is finished " % jobId)
+        self.logger.info("job %s is finished" % jobId)
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     def processJob(self):
         """
         Process job from the queue server
         """
-        self.logger.info(" processJob by pid: %s " % os.getpid())
+        self.logger.info("processJob by pid: %s" % os.getpid())
         try:
             channel = self.getQueueConnection().channel()
             queueName: str = self.config["queue"]["queueName"]
             channel.queue_declare(queueName, durable=True)
             channel.basic_consume(queueName, self.executeProcess)
-            self.logger.info(" start_consuming ")
+            self.logger.info("start_consuming")
             channel.start_consuming()
         except Exception as exc:
             self.logger.critical(exc)
