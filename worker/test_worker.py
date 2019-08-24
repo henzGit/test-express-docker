@@ -285,7 +285,88 @@ class TestWorker(unittest.TestCase):
             self.jobId, JobStatusEnum.PROCESSING, JobStatusEnum.ERROR_DURING_PROCESSING
         )
 
+    @patch.object(Worker, 'executeProcess')
+    @patch.object(Worker, 'getQueueConnection')
+    def test_processJobSuccessful(self,
+                                  mockGetQueueConn: MagicMock,
+                                  executeProcess: MagicMock,
+                                  ):
+        mockConn: MagicMock = MagicMock()
+        self.worker.queueConn = mockConn
+        mockChannel: MagicMock = MagicMock()
+        mockGetQueueConn.return_value.channel.return_value = mockChannel
+        with self.assertRaises(SystemExit):
+            self.worker.processJob()
+        queueName: str = self.config["queue"]["queueName"]
+        mockChannel.queue_declare.assert_called_once_with(queueName, durable=True)
+        mockChannel.basic_consume.assert_called_once_with(queueName, executeProcess)
+        mockChannel.start_consuming.assert_called_once()
+        mockConn.close.assert_called_once()
 
+    @patch.object(Worker, 'getQueueConnection')
+    def test_processJobFailureOnGettingChannel(self, mockGetQueueConn: MagicMock):
+        mockConn: MagicMock = MagicMock()
+        self.worker.queueConn = mockConn
+        mockChannel: MagicMock = MagicMock()
+        mockGetQueueConn.return_value.channel.return_value = mockChannel
+        mockGetQueueConn.return_value.channel.side_effect = self.exception
+        with self.assertRaises(SystemExit):
+            self.worker.processJob()
+        mockChannel.queue_declare.assert_not_called()
+        mockChannel.basic_consume.assert_not_called()
+        mockChannel.start_consuming.assert_not_called()
+        mockConn.close.assert_called_once()
+
+    @patch.object(Worker, 'getQueueConnection')
+    def test_processJobFailureOnQueueDeclare(self, mockGetQueueConn: MagicMock):
+        mockConn: MagicMock = MagicMock()
+        self.worker.queueConn = mockConn
+        mockChannel: MagicMock = MagicMock()
+        mockGetQueueConn.return_value.channel.return_value = mockChannel
+        mockChannel.queue_declare.side_effect = self.exception
+        with self.assertRaises(SystemExit):
+            self.worker.processJob()
+        queueName: str = self.config["queue"]["queueName"]
+        mockChannel.queue_declare.assert_called_once_with(queueName, durable=True)
+        mockChannel.basic_consume.assert_not_called()
+        mockChannel.start_consuming.assert_not_called()
+        mockConn.close.assert_called_once()
+
+    @patch.object(Worker, 'executeProcess')
+    @patch.object(Worker, 'getQueueConnection')
+    def test_processJobFailureOnBasicConsume(
+            self, mockGetQueueConn: MagicMock, executeProcess: MagicMock
+    ):
+        mockConn: MagicMock = MagicMock()
+        self.worker.queueConn = mockConn
+        mockChannel: MagicMock = MagicMock()
+        mockGetQueueConn.return_value.channel.return_value = mockChannel
+        mockChannel.basic_consume.side_effect = self.exception
+        with self.assertRaises(SystemExit):
+            self.worker.processJob()
+        queueName: str = self.config["queue"]["queueName"]
+        mockChannel.queue_declare.assert_called_once_with(queueName, durable=True)
+        mockChannel.basic_consume.assert_called_once_with(queueName, executeProcess)
+        mockChannel.start_consuming.assert_not_called()
+        mockConn.close.assert_called_once()
+
+    @patch.object(Worker, 'executeProcess')
+    @patch.object(Worker, 'getQueueConnection')
+    def test_processJobFailureOnStartConsuming(
+            self, mockGetQueueConn: MagicMock, executeProcess: MagicMock
+    ):
+        mockConn: MagicMock = MagicMock()
+        self.worker.queueConn = mockConn
+        mockChannel: MagicMock = MagicMock()
+        mockGetQueueConn.return_value.channel.return_value = mockChannel
+        mockChannel.start_consuming.side_effect = self.exception
+        with self.assertRaises(SystemExit):
+            self.worker.processJob()
+        queueName: str = self.config["queue"]["queueName"]
+        mockChannel.queue_declare.assert_called_once_with(queueName, durable=True)
+        mockChannel.basic_consume.assert_called_once_with(queueName, executeProcess)
+        mockChannel.start_consuming.assert_called_once()
+        mockConn.close.assert_called_once()
 
 
 if __name__ == '__main__':
