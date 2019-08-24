@@ -7,7 +7,7 @@ from logging import Logger
 from redis import Redis
 from unittest.mock import patch, MagicMock
 from typing import List, Tuple
-
+from job_status_enum import JobStatusEnum
 
 class TestWorker(unittest.TestCase):
     logger: Logger = setupLogging()
@@ -42,12 +42,32 @@ class TestWorker(unittest.TestCase):
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedis(self, mockGetRedisClient: MagicMock):
         returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png']
-        returnValueFunc: Tuple = ('0', 'img/uploaded/1566620014076_test.png')
+        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png')
         mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
         mockResult: Tuple = self.worker.getJobInfoFromRedis(1)
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hmget.assert_called_once()
         self.assertEqual(returnValueFunc, mockResult)
+
+    @patch.object(Worker, 'getRedisClient')
+    def test_updateJobStatusUsingDifferentJobStatus(self, mockGetRedisClient: MagicMock):
+        returnValueFunc: Tuple = JobStatusEnum.PROCESSING
+        mockGetRedisClient.return_value.hset.return_value = ""
+        mockResult: JobStatusEnum = self.worker.updateJobStatus(
+            1, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING
+        )
+        mockGetRedisClient.assert_called_once()
+        mockGetRedisClient().hset.assert_called_once()
+        self.assertEqual(returnValueFunc, mockResult)
+
+    @patch.object(Worker, 'getRedisClient')
+    def test_updateJobStatusUsingSameJobStatus(self, mockGetRedisClient: MagicMock):
+        with self.assertRaises(SystemExit):
+            mockResult: JobStatusEnum = self.worker.updateJobStatus(
+                1, JobStatusEnum.PROCESSING, JobStatusEnum.PROCESSING
+            )
+            self.assertEqual(None, mockResult)
+        mockGetRedisClient().hset.assert_not_called()
 
 
 if __name__ == '__main__':
