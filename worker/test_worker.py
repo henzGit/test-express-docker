@@ -6,11 +6,11 @@ from typing import Dict, Hashable, Any
 from pika import BlockingConnection, ConnectionParameters
 from logging import Logger
 from redis import Redis
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from typing import List, Tuple
 from job_status_enum import JobStatusEnum
-from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, EMPTY_STR, \
-    THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS, THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
+    THUMBNAIL_PATH_REDIS_KEY, THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
 
 
 class TestWorker(unittest.TestCase):
