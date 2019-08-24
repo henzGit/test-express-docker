@@ -4,7 +4,7 @@ from logging import Logger
 from redis import Redis
 from typing import Union, List, Tuple
 from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
-    THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS
+    THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS, THUMBNAIL_MAX_PIXEL
 from job_status_enum import JobStatusEnum
 from wand.image import Image
 
@@ -51,7 +51,7 @@ class Worker:
             exit(1)
         return self.queueConn
 
-    def getJobInfoFromRedis(self, jobId: str) -> Tuple[int, str, str]:
+    def getJobInfoFromRedis(self, jobId: str) -> Tuple[int, str]:
         """
         Get job information from Redis
         :param jobId: id of the job
@@ -65,11 +65,13 @@ class Worker:
             currentJobStatus: int = int(currentJobStatus.decode(self.encoding))
             filePath: str = filePath.decode(self.encoding)
             thumbnailPath: str = thumbnailPath.decode(self.encoding)
-            self.logger.info("-------------------- data from redis: [%s,%s] ----------" % (currentJobStatus, filePath))
+
+            self.logger.info("-------------------- data from redis: [%s,%s, %s] ----------"
+                             % (currentJobStatus, filePath, thumbnailPath))
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
-        return currentJobStatus, filePath, thumbnailPath
+        return currentJobStatus, filePath
 
     def updateJobStatus(self, jobId: str, currentJobStatus: JobStatusEnum, nextJobStatus: JobStatusEnum) \
             -> JobStatusEnum:
@@ -93,6 +95,42 @@ class Worker:
             exit(1)
         return nextJobStatus
 
+    def findThumbnailSize(self, width: int, height: int) -> Tuple[int, int]:
+        """
+        Function to find optimal thumbnail size (default: max width=100px and max height=100px)
+        :param width: width in pixel
+        :param height: height in pixel
+        :return: tuple containing optimal value for width and height
+        """
+        self.logger.info("------ finding thumbnail size for width: %s and height: %s" % (width, height))
+        tobeWidth: int = width
+        tobeHeight: int = height
+        while tobeWidth > THUMBNAIL_MAX_PIXEL or tobeHeight > THUMBNAIL_MAX_PIXEL:
+            tobeWidth /= 2
+            tobeHeight /= 2
+        return int(tobeWidth), int(tobeHeight)
+
+    def makeThumbnail(self, filePath: str) -> str:
+        """
+        Make thumbnail from image in filepath using ImageMagick Library binding for Python (Wand)
+        :param filePath: input image file path
+        :return: path of the resized image
+        """
+        try:
+            self.logger.info("------ opening input image file in %s using Image Magick" % filePath)
+            with Image(filename=filePath) as img:
+                originalWidth: int = img.width
+                originalHeight: int = img.height
+                self.logger.info("image has originalWidth: %s px and originalHeight: %s px"
+                                 % (originalWidth, originalHeight))
+                tobeWidth, tobeHeight = self.findThumbnailSize(originalWidth, originalHeight)
+
+
+        except Exception as exc:
+            self.logger.critical(exc)
+            exit(1)
+        return ""
+
     def executeProcess(self, channel, method_frame, header_frame: BasicProperties, body: bytes):
         """
         Callback when receiving a message
@@ -106,14 +144,13 @@ class Worker:
         self.logger.info("------------------------- receiving job: %s -----------------------" % jobId)
 
         # Get data from redis
-        currentJobStatus, filePath, thumbnailPath = self.getJobInfoFromRedis(jobId)
+        currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
 
         # Update job status in redis to JobStatusEnum.PROCESSING
         currentJobStatus = self.updateJobStatus(jobId, JobStatusEnum(currentJobStatus), JobStatusEnum.PROCESSING)
 
         # Use ImageMagick to make thumbnail
-
-        # Put thumbnail into thumbnail folder
+        thumbnailPath: str = self.makeThumbnail(filePath)
 
         # Update Job status in redis to JobStatusEnum.COMPLETE
         currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.COMPLETE)
