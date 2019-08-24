@@ -3,7 +3,7 @@ import unittest
 from worker import Worker
 from helper import setupLogging
 from typing import Dict, Hashable, Any
-from pika import BlockingConnection
+from pika import BlockingConnection, ConnectionParameters
 from logging import Logger
 from redis import Redis
 from unittest.mock import patch, MagicMock
@@ -41,6 +41,7 @@ class TestWorker(unittest.TestCase):
         # Get existing instance
         redisClient2: Redis = self.worker.getRedisClient()
         self.assertEqual(redisClient, redisClient2)
+        mockRedis.assert_called_once_with(host=self.config["kvs"]["host"], port=self.config["kvs"]["port"])
 
     @patch('worker.Redis')
     def test_getRedisClientFailure(self, mockRedis):
@@ -48,7 +49,7 @@ class TestWorker(unittest.TestCase):
         with self.assertRaises(SystemExit):
             mockResult: Redis = self.worker.getRedisClient()
             self.assertEqual(None, mockResult)
-        mockRedis.assert_called_once()
+        mockRedis.assert_called_once_with(host=self.config["kvs"]["host"], port=self.config["kvs"]["port"])
 
     @patch('worker.BlockingConnection')
     def test_getQueueConnectionSuccessful(self, mockQueueConn):
@@ -59,6 +60,9 @@ class TestWorker(unittest.TestCase):
         # Get existing instance
         queueConn2: BlockingConnection = self.worker.getQueueConnection()
         self.assertEqual(queueConn, queueConn2)
+        parameters = ConnectionParameters(host=self.config["queue"]["host"],
+                                          port=self.config["queue"]["port"])
+        mockQueueConn.assert_called_once_with(parameters)
 
     @patch('worker.BlockingConnection')
     def test_getQueueConnectionFailure(self, mockQueueConn):
@@ -66,7 +70,9 @@ class TestWorker(unittest.TestCase):
         with self.assertRaises(SystemExit):
             queueConn: BlockingConnection = self.worker.getQueueConnection()
             self.assertEqual(None, queueConn)
-        mockQueueConn.assert_called_once()
+        parameters = ConnectionParameters(host=self.config["queue"]["host"],
+                                          port=self.config["queue"]["port"])
+        mockQueueConn.assert_called_once_with(parameters)
 
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedisSuccessful(self, mockGetRedisClient: MagicMock):
@@ -88,20 +94,34 @@ class TestWorker(unittest.TestCase):
         mockGetRedisClient().hmget.assert_called_once()
 
     @patch.object(Worker, 'getRedisClient')
-    def test_updateJobStatusUsingDifferentJobStatus(self, mockGetRedisClient: MagicMock):
-        returnValueFunc: Tuple = JobStatusEnum.PROCESSING
+    def test_updateJobStatusUsingDifferentJobStatusDefaultThumbnailPath(self, mockGetRedisClient: MagicMock):
+        returnValueFunc: JobStatusEnum = JobStatusEnum.PROCESSING
         mockGetRedisClient.return_value.hset.return_value = ''
-        mockResult: JobStatusEnum = self.worker.updateJobStatus(
+        mockResult: JobStatusEnum = self.worker.updateJobInfo(
             self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING
         )
+        mockGetRedisClient.assert_called_once()
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hset.assert_called_once()
         self.assertEqual(returnValueFunc, mockResult)
 
     @patch.object(Worker, 'getRedisClient')
+    def test_updateJobStatusUsingDifferentJobStatusCustomThumbnailPath(self, mockGetRedisClient: MagicMock):
+        returnValueFunc: JobStatusEnum = JobStatusEnum.PROCESSING
+        mockGetRedisClient.return_value.hmset.return_value = ''
+        mockResult: JobStatusEnum = self.worker.updateJobInfo(
+            self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING, self.thumbnailPath
+        )
+        mockGetRedisClient.assert_called_once()
+        mockGetRedisClient().hmset.assert_called_once()
+        mockGetRedisClient().hset.assert_not_called()
+        self.assertEqual(returnValueFunc, mockResult)
+
+
+    @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusUsingSameJobStatus(self, mockGetRedisClient: MagicMock):
         with self.assertRaises(SystemExit):
-            mockResult: JobStatusEnum = self.worker.updateJobStatus(
+            mockResult: JobStatusEnum = self.worker.updateJobInfo(
                 self.jobId, JobStatusEnum.PROCESSING, JobStatusEnum.PROCESSING
             )
             self.assertEqual(None, mockResult)
@@ -111,7 +131,7 @@ class TestWorker(unittest.TestCase):
     def test_updateJobStatusRedisConnProblem(self, mockGetRedisClient: MagicMock):
         mockGetRedisClient.return_value.hset.side_effect = self.exception
         with self.assertRaises(SystemExit):
-            mockResult: JobStatusEnum = self.worker.updateJobStatus(
+            mockResult: JobStatusEnum = self.worker.updateJobInfo(
                 self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING
             )
             self.assertEqual(None, mockResult)
