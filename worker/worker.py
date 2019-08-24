@@ -126,9 +126,8 @@ class Worker:
         :param filePath: input file path
         :return: thumbnail path
         """
-        basename: str = os.path.basename(filePath)
         thumbnailDir: str = self.config["fileStorage"]["thumbnailPath"]
-        thumbnailPath: str = thumbnailDir + basename
+        thumbnailPath: str = thumbnailDir + os.path.basename(filePath)
         return thumbnailPath
 
     def makeThumbnail(self, filePath: str) -> str:
