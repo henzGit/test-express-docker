@@ -1,3 +1,4 @@
+import os
 import unittest
 from worker import Worker
 from helper import setupLogging
@@ -16,6 +17,7 @@ class TestWorker(unittest.TestCase):
     config: Dict[Hashable, Any] = {
         'kvs': {'host': 'kvs', 'indexKey': 'redisIndexKey', 'port': 6379},
         'queue': {'host': 'queue', 'port': 5672, 'queueName': 'test_queue'},
+        'fileStorage': {'thumbnailPath': '/img/thumbnail/'}
     }
     worker: Worker = Worker(config, logger)
     exception: Exception = Exception('Boom!')
@@ -85,7 +87,7 @@ class TestWorker(unittest.TestCase):
     @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusUsingDifferentJobStatus(self, mockGetRedisClient: MagicMock):
         returnValueFunc: Tuple = JobStatusEnum.PROCESSING
-        mockGetRedisClient.return_value.hset.return_value = ""
+        mockGetRedisClient.return_value.hset.return_value = ''
         mockResult: JobStatusEnum = self.worker.updateJobStatus(
             self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING
         )
@@ -119,8 +121,8 @@ class TestWorker(unittest.TestCase):
         tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
         self.assertEqual(tobeWidth, 96)
         self.assertEqual(tobeHeight, 70)
-        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
-        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, 'Width to be less than max pixel')
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, 'Height to be less than max pixel')
         self.assertIsInstance(tobeWidth, int)
         self.assertIsInstance(tobeHeight, int)
 
@@ -130,8 +132,8 @@ class TestWorker(unittest.TestCase):
         tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
         self.assertEqual(tobeWidth, 75)
         self.assertEqual(tobeHeight, 25)
-        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
-        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, 'Width to be less than max pixel')
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, 'Height to be less than max pixel')
         self.assertIsInstance(tobeWidth, int)
         self.assertIsInstance(tobeHeight, int)
 
@@ -141,8 +143,8 @@ class TestWorker(unittest.TestCase):
         tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
         self.assertEqual(tobeWidth, 40)
         self.assertEqual(tobeHeight, 60)
-        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
-        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, 'Width to be less than max pixel')
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, 'Height to be less than max pixel')
         self.assertIsInstance(tobeWidth, int)
         self.assertIsInstance(tobeHeight, int)
 
@@ -164,6 +166,12 @@ class TestWorker(unittest.TestCase):
         self.assertIsInstance(tobeWidth, int)
         self.assertIsInstance(tobeHeight, int)
 
+    def test_getThumbnailPath(self):
+        filePath: str = '/img/uploaded/1566650412191_test.png'
+        thumbnailPath: str = self.worker.getThumbnailPath(filePath)
+        filename: str = os.path.basename(filePath)
+        tobeThumbnailPath: str = self.config['fileStorage']['thumbnailPath'] + filename
+        self.assertEqual(tobeThumbnailPath, thumbnailPath)
 
 if __name__ == '__main__':
     unittest.main()
