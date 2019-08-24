@@ -92,7 +92,10 @@ describe('ImageController', () => {
                 await agent.post('/image')
                   .attach('image', SRC_IMG)
                   .expect(OK)
-                  .expect(SUCCESS_IMG_PROCESSING);
+                  .expect({
+                    imageId: 1,
+                    msg: SUCCESS_IMG_PROCESSING
+                  });
             });
         it(`should return a JSON object with the message "${ERR_FILE_UPLOAD}"
                 and a status code of "${INTERNAL_SERVER_ERROR}" if something occurs 
