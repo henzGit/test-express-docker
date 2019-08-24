@@ -76,12 +76,10 @@ class Worker:
             channel.queue_declare(queueName, durable=True)
             channel.basic_consume(queueName, self._onMessage)
             self.logger.info("--------------------- start_consuming -----------------------")
-            try:
-                channel.start_consuming()
-            except KeyboardInterrupt:
-                channel.stop_consuming()
+            channel.start_consuming()
         except Exception as exc:
             self.logger.critical(exc)
         finally:
+            channel.stop_consuming()
             self.queueConn.close()
             exit(1)
