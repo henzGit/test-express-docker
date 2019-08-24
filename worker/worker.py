@@ -2,13 +2,15 @@ import os
 from pika import BlockingConnection, ConnectionParameters
 from logging import Logger
 from redis import Redis
+from typing import Union
+
 
 class Worker:
     def __init__(self, config: dict, logger: Logger):
         self.config = config
         self.logger = logger
-        self.redisClient: Redis = None
-        self.queueConn: BlockingConnection = None
+        self.redisClient: Union[Redis, None] = None
+        self.queueConn: Union[BlockingConnection, None] = None
 
     def getRedisClient(self) -> Redis:
         """
@@ -53,25 +55,20 @@ class Worker:
         :param body: body of the message
         """
         jobId: str = body.decode("utf-8")
-        self.logger.info("---------------- receiving job: %s ---------------"%jobId)
+        self.logger.info("---------------- receiving job: %s ---------------" % jobId)
 
         # Update job status in redis
 
         # acknowledge message if treatment is finished
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
-
     def processJob(self):
         """
         Process job from the queue server
         """
         self.logger.info("------------- processJob by pid: %s-------------" % os.getpid())
-
-        redisCLient: Redis = self.getRedisClient()
-        queueConn: BlockingConnection = self.getQueueConnection()
-
         try:
-            channel = queueConn.channel()
+            channel = self.getQueueConnection().channel()
             queueName: str = self.config["queue"]["queueName"]
             channel.queue_declare(queueName, durable=True)
             channel.basic_consume(queueName, self._onMessage)

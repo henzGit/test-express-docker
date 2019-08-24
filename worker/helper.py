@@ -3,6 +3,7 @@ from yaml import YAMLError, safe_load
 from typing import Dict
 from logging import Logger, FileHandler, StreamHandler, Formatter, DEBUG, getLogger
 
+
 def setupLogging() -> Logger:
     """
     Setup logging for the worker
@@ -36,6 +37,7 @@ def setupLogging() -> Logger:
 def readConf(path: str, logger: Logger) -> Dict:
     """
     Read values from configuration YAML file
+    :param path: path of the yaml file
     :param logger: main logger object for logging purpose
     :return: config data in the form of Dict
     """
@@ -44,7 +46,7 @@ def readConf(path: str, logger: Logger) -> Dict:
     with open(path, 'r') as stream:
         try:
             config: Dict = safe_load(stream)
-            logger.info("config: \n%s" %pp.pformat(config))
+            logger.info("config: \n%s" % pp.pformat(config))
             return config
         except YAMLError as exc:
             logger.critical(exc)
