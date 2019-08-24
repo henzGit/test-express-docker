@@ -7,6 +7,7 @@ from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
     JOB_STATUS_INDEX, FILE_PATH_INDEX, ERROR_SAME_JOB_STATUS
 from job_status_enum import JobStatusEnum
 
+
 class Worker:
     def __init__(self, config: dict, logger: Logger):
         self.config = config
@@ -88,7 +89,6 @@ class Worker:
             exit(1)
         return nextJobStatus
 
-
     def executeProcess(self, channel, method_frame, header_frame: BasicProperties, body: bytes):
         """
         Callback when receiving a message
@@ -115,8 +115,9 @@ class Worker:
         currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.COMPLETE)
 
         # acknowledge message if treatment is finished
-        self.logger.info("-------------------------  job %s is finished -----------------------" % jobId)
-        channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+        if currentJobStatus == JobStatusEnum.COMPLETE:
+            self.logger.info("-------------------------  job %s is finished -----------------------" % jobId)
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     def processJob(self):
         """
