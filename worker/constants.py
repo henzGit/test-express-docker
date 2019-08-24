@@ -6,3 +6,4 @@ ERROR_SAME_JOB_STATUS = "A problem occurred due to same status for current and n
 ERROR_PROCESSING_IMAGE = "A problem occurred during processing of image file with Image Magick."
 
 THUMBNAIL_MAX_PIXEL = 100
+EMPTY_STR = ""
