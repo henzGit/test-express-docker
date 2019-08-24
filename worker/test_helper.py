@@ -9,10 +9,10 @@ class TestHelper(unittest.TestCase):
         logger: Logger = setupLogging()
         self.assertIsInstance(logger, Logger)
 
+    @patch('builtins.open', mock_open(read_data='{"hello":"world"}'))
     def test_readConf(self):
-        with patch('builtins.open', mock_open(read_data='{"hello":"world"}')):
-            logger: Logger = setupLogging()
-            res = readConf('foo', logger)
+        logger: Logger = setupLogging()
+        res = readConf('foo', logger)
         assert res == {"hello": "world"}
 
 

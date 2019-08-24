@@ -14,31 +14,37 @@ class TestWorker(unittest.TestCase):
         'kvs': {'host': 'kvs', 'indexKey': 'redisIndexKey', 'port': 6379},
         'queue': {'host': 'queue', 'port': 5672, 'queueName': 'test_queue'},
     }
+    worker: Worker = Worker(config, logger)
 
     def test_constructor(self):
-        worker: Worker = Worker(self.config, self.logger)
-        self.assertEqual(worker.config, self.config)
-        self.assertEqual(worker.logger, self.logger)
-        self.assertEqual(worker.redisClient, None)
-        self.assertEqual(worker.queueConn, None)
+        self.assertEqual(self.worker.config, self.config)
+        self.assertEqual(self.worker.logger, self.logger)
+        self.assertEqual(self.worker.redisClient, None)
+        self.assertEqual(self.worker.queueConn, None)
 
-    def test_getRedisClient(self):
-        worker: Worker = Worker(self.config, self.logger)
-        with patch('worker.Redis'):
-            redisClient: Redis = worker.getRedisClient()
-            self.assertIsInstance(redisClient, MagicMock)
-            self.assertEqual(redisClient, worker.redisClient)
-            redisClient2: Redis = worker.getRedisClient()
-            self.assertEqual(redisClient, redisClient2)
+    @patch('worker.Redis')
+    def test_getRedisClient(self, mock_redis):
+        redisClient: Redis = self.worker.getRedisClient()
+        self.assertIsInstance(redisClient, MagicMock)
+        self.assertEqual(redisClient, self.worker.redisClient)
+        redisClient2: Redis = self.worker.getRedisClient()
+        self.assertEqual(redisClient, redisClient2)
 
-    def test_getQueueConnection(self):
-        worker: Worker = Worker(self.config, self.logger)
-        with patch('worker.BlockingConnection'):
-            queueConn: BlockingConnection = worker.getQueueConnection()
-            self.assertIsInstance(queueConn, MagicMock)
-            self.assertEqual(queueConn, worker.queueConn)
-            queueConn2: BlockingConnection = worker.getQueueConnection()
-            self.assertEqual(queueConn, queueConn2)
+    @patch('worker.BlockingConnection')
+    def test_getQueueConnection(self, mock_conn):
+        queueConn: BlockingConnection = self.worker.getQueueConnection()
+        self.assertIsInstance(queueConn, MagicMock)
+        self.assertEqual(queueConn, self.worker.queueConn)
+        queueConn2: BlockingConnection = self.worker.getQueueConnection()
+        self.assertEqual(queueConn, queueConn2)
+
+    # def test_getJobInfoFromRedis(self):
+    #     with patch('worker.BlockingConnection'):
+    #         queueConn: BlockingConnection = self.worker.getQueueConnection()
+    #         self.assertIsInstance(queueConn, MagicMock)
+    #         self.assertEqual(queueConn, self.worker.queueConn)
+    #         queueConn2: BlockingConnection = self.worker.getQueueConnection()
+    #         self.assertEqual(queueConn, queueConn2)
 
 
 if __name__ == '__main__':
