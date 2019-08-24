@@ -258,9 +258,7 @@ class TestWorker(unittest.TestCase):
         mockGetJobInfoFromRedis.return_value = (JobStatusEnum.READY_FOR_PROCESSING, self.filePath)
         mockUpdateJobInfo.return_value = JobStatusEnum.PROCESSING
         mockMakeThumbnail.return_value = self.thumbnailPath
-        mockChannel: MagicMock = MagicMock()
-        mockMethodFrame: MagicMock = MagicMock()
-        self.worker.executeProcess(mockChannel, mockMethodFrame, None, b'1')
+        self.worker.executeProcess(MagicMock(), MagicMock(), None, b'1')
         mockGetJobInfoFromRedis.assert_called_once_with(self.jobId)
         mockMakeThumbnail.assert_called_once_with(self.filePath)
         self.assertEqual(mockUpdateJobInfo.call_count, 2)
@@ -268,6 +266,24 @@ class TestWorker(unittest.TestCase):
             self.jobId, JobStatusEnum.PROCESSING, JobStatusEnum.COMPLETE, self.thumbnailPath
         )
 
+    @patch.object(Worker, 'makeThumbnail')
+    @patch.object(Worker, 'updateJobInfo')
+    @patch.object(Worker, 'getJobInfoFromRedis')
+    def test_executeProcessFailure(self,
+                                      mockGetJobInfoFromRedis: MagicMock,
+                                      mockUpdateJobInfo: MagicMock,
+                                      mockMakeThumbnail: MagicMock,
+                                      ):
+        mockGetJobInfoFromRedis.return_value = (JobStatusEnum.READY_FOR_PROCESSING, self.filePath)
+        mockUpdateJobInfo.return_value = JobStatusEnum.PROCESSING
+        mockMakeThumbnail.return_value = ERROR_PROCESSING_IMAGE
+        self.worker.executeProcess(MagicMock(), MagicMock(), None, b'1')
+        mockGetJobInfoFromRedis.assert_called_once_with(self.jobId)
+        mockMakeThumbnail.assert_called_once_with(self.filePath)
+        self.assertEqual(mockUpdateJobInfo.call_count, 2)
+        mockUpdateJobInfo.assert_called_with(
+            self.jobId, JobStatusEnum.PROCESSING, JobStatusEnum.ERROR_DURING_PROCESSING
+        )
 
 
 
