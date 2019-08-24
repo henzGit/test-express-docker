@@ -22,6 +22,7 @@ services:
       dockerfile: dockerfiles/app.Dockerfile
     volumes:
     - .:/app
+    - ./img:/img
     command:
       - /scripts/wait-for-it.sh
       - test-redis:6379
