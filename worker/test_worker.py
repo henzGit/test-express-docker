@@ -9,7 +9,9 @@ from redis import Redis
 from unittest.mock import patch, MagicMock
 from typing import List, Tuple
 from job_status_enum import JobStatusEnum
-from constants import THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, EMPTY_STR, \
+    THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS, THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
+
 
 class TestWorker(unittest.TestCase):
     logger: Logger = setupLogging()
@@ -81,7 +83,8 @@ class TestWorker(unittest.TestCase):
         mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
         mockResult: Tuple = self.worker.getJobInfoFromRedis(self.jobId)
         mockGetRedisClient.assert_called_once()
-        mockGetRedisClient().hmget.assert_called_once()
+        mockGetRedisClient().hmget.assert_called_once_with(
+            self.jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY, THUMBNAIL_PATH_REDIS_KEY])
         self.assertEqual(returnValueFunc, mockResult)
 
     @patch.object(Worker, 'getRedisClient')
@@ -91,7 +94,8 @@ class TestWorker(unittest.TestCase):
             mockResult: Tuple = self.worker.getJobInfoFromRedis(self.jobId)
             self.assertEqual(None, mockResult)
         mockGetRedisClient.assert_called_once()
-        mockGetRedisClient().hmget.assert_called_once()
+        mockGetRedisClient().hmget.assert_called_once_with(
+            self.jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY, THUMBNAIL_PATH_REDIS_KEY])
 
     @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusUsingDifferentJobStatusDefaultThumbnailPath(self, mockGetRedisClient: MagicMock):
@@ -101,8 +105,9 @@ class TestWorker(unittest.TestCase):
             self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING
         )
         mockGetRedisClient.assert_called_once()
-        mockGetRedisClient.assert_called_once()
-        mockGetRedisClient().hset.assert_called_once()
+        mockGetRedisClient().hset.assert_called_once_with(
+            self.jobId, JOB_STATUS_REDIS_KEY, JobStatusEnum.PROCESSING.value
+        )
         self.assertEqual(returnValueFunc, mockResult)
 
     @patch.object(Worker, 'getRedisClient')
@@ -113,10 +118,13 @@ class TestWorker(unittest.TestCase):
             self.jobId, JobStatusEnum.READY_FOR_PROCESSING, JobStatusEnum.PROCESSING, self.thumbnailPath
         )
         mockGetRedisClient.assert_called_once()
-        mockGetRedisClient().hmset.assert_called_once()
+        mapping: dict = {
+            JOB_STATUS_REDIS_KEY: JobStatusEnum.PROCESSING.value,
+            THUMBNAIL_PATH_REDIS_KEY: self.thumbnailPath
+        }
+        mockGetRedisClient().hmset.assert_called_once_with(self.jobId, mapping)
         mockGetRedisClient().hset.assert_not_called()
         self.assertEqual(returnValueFunc, mockResult)
-
 
     @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusUsingSameJobStatus(self, mockGetRedisClient: MagicMock):
@@ -126,6 +134,7 @@ class TestWorker(unittest.TestCase):
             )
             self.assertEqual(None, mockResult)
         mockGetRedisClient().hset.assert_not_called()
+        mockGetRedisClient().hmset.assert_not_called()
 
     @patch.object(Worker, 'getRedisClient')
     def test_updateJobStatusRedisConnProblem(self, mockGetRedisClient: MagicMock):
@@ -136,7 +145,9 @@ class TestWorker(unittest.TestCase):
             )
             self.assertEqual(None, mockResult)
         mockGetRedisClient.assert_called_once()
-        mockGetRedisClient().hset.assert_called_once()
+        mockGetRedisClient().hset.assert_called_once_with(
+            self.jobId, JOB_STATUS_REDIS_KEY, JobStatusEnum.PROCESSING.value
+        )
 
     def test_findThumbnailSizeResizeBothValuesMoreThanMax(self):
         width: int = 772
@@ -216,7 +227,7 @@ class TestWorker(unittest.TestCase):
         mockImgContextManager.save.assert_not_called()
 
     @patch('worker.Image')
-    def test_makeThumbnailExceptionSaveFile(self,  mockImage: MagicMock):
+    def test_makeThumbnailExceptionSaveFile(self, mockImage: MagicMock):
         mockImgContextManager: MagicMock = MagicMock(width=self.width, height=self.height)
         mockImgContextManager.save.side_effect = self.exception
         mockImage.return_value.__enter__.return_value = mockImgContextManager
@@ -227,7 +238,7 @@ class TestWorker(unittest.TestCase):
         mockImgContextManager.save.assert_called_once_with(filename=self.thumbnailPath)
 
     @patch('worker.Image')
-    def test_makeThumbnailSuccessful(self,  mockImage: MagicMock):
+    def test_makeThumbnailSuccessful(self, mockImage: MagicMock):
         mockImgContextManager: MagicMock = MagicMock(width=self.width, height=self.height)
         mockImage.return_value.__enter__.return_value = mockImgContextManager
         retMakeThumbnail: str = self.worker.makeThumbnail(self.filePath)
@@ -235,6 +246,7 @@ class TestWorker(unittest.TestCase):
         mockImage.assert_called_once_with(filename=self.filePath)
         mockImgContextManager.resize.assert_called_once_with(self.width, self.height)
         mockImgContextManager.save.assert_called_once_with(filename=self.thumbnailPath)
+
 
 if __name__ == '__main__':
     unittest.main()
