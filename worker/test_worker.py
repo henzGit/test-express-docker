@@ -63,8 +63,8 @@ class TestWorker(unittest.TestCase):
 
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedisSuccessful(self, mockGetRedisClient: MagicMock):
-        returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png']
-        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png')
+        returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png', b'']
+        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png', '')
         mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
         mockResult: Tuple = self.worker.getJobInfoFromRedis(self.jobId)
         mockGetRedisClient.assert_called_once()
