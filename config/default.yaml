@@ -5,7 +5,8 @@ App:
   server:
     port: 3000
   fileStorage:
-    dirPath: /img/uploaded/
+    uploadedPath: /img/uploaded/
+    thumbnailPath: /img/thumbnail/
   kvs:
     host: kvs
     port: 6379
