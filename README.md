@@ -36,3 +36,5 @@ Python3.7
 - Swagger documentation for the API can be found on `http://localhost:3000/docs/`
 
 # Notes
+* Python is chosen for the worker language due to its simplicity and available binding with Image Magick 
+* Many optimizations are omitted due to time constraint
