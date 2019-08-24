@@ -1,7 +1,7 @@
 {
   "name": "typescript-express-example",
   "version": "1.0.0",
-  "description": "Example how to use Express with TypeScript.",
+  "description": "Example REST API using Express and TypeScript.",
   "license": "MIT",
   "author": {
     "name": "Hendrik",
