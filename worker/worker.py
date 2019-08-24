@@ -168,7 +168,6 @@ class Worker:
 
         # Get data from redis
         currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
-        # self.logger.info("currentJobStatus: %s, filePath: %s" % (currentJobStatus, filePath))
 
         # Update job status in redis to JobStatusEnum.PROCESSING
         currentJobStatus = self.updateJobInfo(jobId, currentJobStatus, JobStatusEnum.PROCESSING)
