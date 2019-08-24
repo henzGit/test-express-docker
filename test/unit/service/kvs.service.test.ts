@@ -1,7 +1,8 @@
 import KvsServiceInterface from "../../../src/lib/interface/kvs.service.interface";
 import KvsService from "../../../src/service/kvs.service";
-import { DST_IMG, REDIS_INDEX_KEY } from "../../testConstants"
-import { ERR_CODE_MINUS_ONE, KVS_KEY_FILE_PATH, KVS_KEY_JOB_STATUS}
+import { DST_IMG, REDIS_INDEX_KEY, EMPTY_STR } from "../../testConstants"
+import { ERR_CODE_MINUS_ONE, KVS_KEY_FILE_PATH,
+  KVS_KEY_JOB_STATUS, KVS_KEY_THUMBNAIL_PATH }
   from "../../../src/lib/constant/constants";
 import { JOB_STATUS } from "../../../src/lib/constant/jobStatus.enum";
 import { Logger } from "log4js";
@@ -35,10 +36,11 @@ describe('KvsService', () => {
           const imageInfo: object = await redisClientMock.hmget(
               String(imageId),
               KVS_KEY_FILE_PATH,
-              KVS_KEY_JOB_STATUS
+              KVS_KEY_JOB_STATUS,
+              KVS_KEY_THUMBNAIL_PATH
           );
           expect(imageInfo).toStrictEqual(
-              [DST_IMG, String(JOB_STATUS.READY_FOR_PROCESSING)]
+              [DST_IMG, String(JOB_STATUS.READY_FOR_PROCESSING), EMPTY_STR]
           );
       });
       it(`should return -1 if not successful and data DOES NOT exist in redis`,

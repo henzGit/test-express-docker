@@ -13,3 +13,4 @@ export const SUCCESS_GET_IMG_THUMBNAIL = "Successfully get image thumbnail.";
 
 export const KVS_KEY_JOB_STATUS = "jobstatus";
 export const KVS_KEY_FILE_PATH = "filepath";
+export const KVS_KEY_THUMBNAIL_PATH = "thumbnailpath";

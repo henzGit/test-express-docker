@@ -2,7 +2,8 @@ import * as IORedis from "ioredis";
 import KvsServiceInterface from "../lib/interface/kvs.service.interface";
 import { Logger } from "log4js";
 import { JOB_STATUS } from "../lib/constant/jobStatus.enum";
-import { ERR_CODE_MINUS_ONE, KVS_KEY_FILE_PATH, KVS_KEY_JOB_STATUS }
+import { ERR_CODE_MINUS_ONE, KVS_KEY_FILE_PATH, KVS_KEY_JOB_STATUS,
+  KVS_KEY_THUMBNAIL_PATH }
   from "../lib/constant/constants";
 
 /**
@@ -47,12 +48,14 @@ export default class KvsService implements KvsServiceInterface {
       imageId = await this.getRedisClient(IORedis).incr(this.redisIndexKey);
       this.logger.info(`trying to put image file info into redis: 
         imageId: ${imageId}, filePath: ${filePath}, 
-        with jobStatus:  ${JOB_STATUS.READY_FOR_PROCESSING}
+        with jobStatus:  ${JOB_STATUS.READY_FOR_PROCESSING},
+        and thumbnailPath: ""
       `);
       await this.getRedisClient(IORedis).hmset(
           String(imageId),
           KVS_KEY_FILE_PATH, filePath,
-          KVS_KEY_JOB_STATUS, String(JOB_STATUS.READY_FOR_PROCESSING)
+          KVS_KEY_JOB_STATUS, String(JOB_STATUS.READY_FOR_PROCESSING),
+          KVS_KEY_THUMBNAIL_PATH, ""
       );
     } catch (err) {
       // TODO handle error
