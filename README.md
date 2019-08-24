@@ -1,5 +1,13 @@
 # Overview
-This is a scaffold of NodeJS-based REST API built on top on Koa webserver with TypeScript. Tested using Node LTS v10.13.0.
+This is a REST API based on Express and Typescript.
+
+# Routes
+There are two routes available
+## POST /image
+Post an image file to get its thumbnail
+
+## GET /image/{imageId}/thumbnail
+Get thumbnail given an imageId
 
 # How to install
 1. clone repository
@@ -7,8 +15,9 @@ This is a scaffold of NodeJS-based REST API built on top on Koa webserver with T
 
 # Available commands
 - start application: `yarn start`
+- start application (dev-mode): `yarn run dev`
 - run test: `yarn test`
 
 # Available paths
-- The application runs on `localhost:7001`
-- Swagger documentation for the API can be found on `localhost:7001/api`
+- The application runs on `http://localhost:3000/`
+- Swagger documentation for the API can be found on `http://localhost:3000/docs/`
