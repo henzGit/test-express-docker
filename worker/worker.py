@@ -52,7 +52,7 @@ class Worker:
             exit(1)
         return self.queueConn
 
-    def getJobInfoFromRedis(self, jobId: str) -> Tuple[int, str]:
+    def getJobInfoFromRedis(self, jobId: str) -> Tuple[JobStatusEnum, str]:
         """
         Get job information from Redis
         :param jobId: id of the job
@@ -63,7 +63,7 @@ class Worker:
             currentJobStatus, filePath, thumbnailPath = self.getRedisClient().hmget(
                 jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY, THUMBNAIL_PATH_REDIS_KEY]
             )
-            currentJobStatus: int = int(currentJobStatus.decode(self.encoding))
+            currentJobStatus: JobStatusEnum = JobStatusEnum(int(currentJobStatus.decode(self.encoding)))
             filePath: str = filePath.decode(self.encoding)
             thumbnailPath: str = thumbnailPath.decode(self.encoding)
 
@@ -168,9 +168,10 @@ class Worker:
 
         # Get data from redis
         currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
+        # self.logger.info("currentJobStatus: %s, filePath: %s" % (currentJobStatus, filePath))
 
         # Update job status in redis to JobStatusEnum.PROCESSING
-        currentJobStatus = self.updateJobInfo(jobId, JobStatusEnum(currentJobStatus), JobStatusEnum.PROCESSING)
+        currentJobStatus = self.updateJobInfo(jobId, currentJobStatus, JobStatusEnum.PROCESSING)
 
         # Use ImageMagick to make thumbnail
         retThumbnailPath: str = self.makeThumbnail(filePath)
