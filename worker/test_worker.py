@@ -8,6 +8,7 @@ from redis import Redis
 from unittest.mock import patch, MagicMock
 from typing import List, Tuple
 from job_status_enum import JobStatusEnum
+from constants import THUMBNAIL_MAX_PIXEL
 
 class TestWorker(unittest.TestCase):
     logger: Logger = setupLogging()
@@ -64,7 +65,7 @@ class TestWorker(unittest.TestCase):
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedisSuccessful(self, mockGetRedisClient: MagicMock):
         returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png', b'']
-        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png', '')
+        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png')
         mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
         mockResult: Tuple = self.worker.getJobInfoFromRedis(self.jobId)
         mockGetRedisClient.assert_called_once()
@@ -112,6 +113,16 @@ class TestWorker(unittest.TestCase):
         mockGetRedisClient.assert_called_once()
         mockGetRedisClient().hset.assert_called_once()
 
+    def test_findThumbnailSize(self):
+        width: int = 772
+        height: int = 563
+        tobeWidth, tobeHeight = self.worker.findThumbnailSize(width, height)
+        self.assertEqual(tobeWidth, 96)
+        self.assertEqual(tobeHeight, 70)
+        self.assertLess(tobeWidth, THUMBNAIL_MAX_PIXEL, "Width to be less than max pixel")
+        self.assertLess(tobeHeight, THUMBNAIL_MAX_PIXEL, "Height to be less than max pixel")
+        self.assertIsInstance(tobeWidth, int)
+        self.assertIsInstance(tobeHeight, int)
 
 if __name__ == '__main__':
     unittest.main()
