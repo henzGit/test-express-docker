@@ -5,7 +5,7 @@ App:
   server:
     port: 3000
   fileStorage:
-    dirPath: img/uploaded/
+    dirPath: /img/uploaded/
   kvs:
     host: kvs
     port: 6379
@@ -15,4 +15,4 @@ App:
     port: 5672
     queueName: test_queue
   worker:
-    numberWorker: 2
+    numberWorker: 1
