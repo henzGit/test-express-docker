@@ -3,7 +3,7 @@ from pika import BlockingConnection, ConnectionParameters, BasicProperties
 from logging import Logger
 from redis import Redis
 from typing import Union, List, Tuple
-from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, \
+from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, EMPTY_STR, \
     THUMBNAIL_PATH_REDIS_KEY, ERROR_SAME_JOB_STATUS, THUMBNAIL_MAX_PIXEL, ERROR_PROCESSING_IMAGE
 from job_status_enum import JobStatusEnum
 from wand.image import Image
@@ -73,22 +73,33 @@ class Worker:
             exit(1)
         return currentJobStatus, filePath
 
-    def updateJobStatus(self, jobId: str, currentJobStatus: JobStatusEnum, nextJobStatus: JobStatusEnum) \
-            -> JobStatusEnum:
+    def updateJobInfo(self, jobId: str, currentJobStatus: JobStatusEnum,
+                      nextJobStatus: JobStatusEnum, thumbnailPath: str = "") -> JobStatusEnum:
         """
         Update job status into Redis
         :param jobId: current job id
         :param currentJobStatus: current job status
         :param nextJobStatus: next job status
+        :param thumbnailPath: path of the thumbnail image file
         :return: nextJobStatus if successful
         """
         if currentJobStatus == nextJobStatus:
             self.logger.critical(ERROR_SAME_JOB_STATUS)
             exit(1)
         try:
-            self.logger.info("updating job status into redis")
-            self.getRedisClient().hset(jobId, JOB_STATUS_REDIS_KEY, nextJobStatus.value)
-            self.logger.info("successfully updated job status from: %s to: %s" % (currentJobStatus, nextJobStatus))
+            self.logger.info("updating job info into redis")
+            if thumbnailPath == EMPTY_STR:
+                self.getRedisClient().hset(jobId, JOB_STATUS_REDIS_KEY, nextJobStatus.value)
+                self.logger.info("successfully updated job status from: %s to: %s" % (currentJobStatus, nextJobStatus))
+            else:
+                mapping: dict = {
+                    JOB_STATUS_REDIS_KEY: nextJobStatus.value,
+                    THUMBNAIL_PATH_REDIS_KEY: thumbnailPath
+                }
+                self.getRedisClient().hmset(jobId, mapping)
+                self.logger.info("successfully updated job status from: %s to: %s and thumbnail path: %s"
+                                 % (currentJobStatus, nextJobStatus, thumbnailPath))
+
         except Exception as exc:
             self.logger.critical(exc)
             exit(1)
@@ -160,17 +171,17 @@ class Worker:
         currentJobStatus, filePath = self.getJobInfoFromRedis(jobId)
 
         # Update job status in redis to JobStatusEnum.PROCESSING
-        currentJobStatus = self.updateJobStatus(jobId, JobStatusEnum(currentJobStatus), JobStatusEnum.PROCESSING)
+        currentJobStatus = self.updateJobInfo(jobId, JobStatusEnum(currentJobStatus), JobStatusEnum.PROCESSING)
 
         # Use ImageMagick to make thumbnail
         retThumbnailPath: str = self.makeThumbnail(filePath)
 
         if retThumbnailPath == ERROR_PROCESSING_IMAGE:
             # Update Job status in redis to JobStatusEnum.ERROR_DURING_PROCESSING
-            currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.ERROR_DURING_PROCESSING)
+            self.updateJobInfo(jobId, currentJobStatus, JobStatusEnum.ERROR_DURING_PROCESSING)
         else:
-            # Update Job status in redis to JobStatusEnum.COMPLETE
-            currentJobStatus = self.updateJobStatus(jobId, currentJobStatus, JobStatusEnum.COMPLETE)
+            # Update Job status in redis to JobStatusEnum.COMPLETE and fill in thumbnail path accordingly
+            self.updateJobInfo(jobId, currentJobStatus, JobStatusEnum.COMPLETE, retThumbnailPath)
 
         # acknowledge message if treatment is finished
         self.logger.info("job %s is finished" % jobId)
