@@ -51,10 +51,11 @@ class Worker:
         """
         Get job information from Redis
         :param jobId: id of the job
-        :return:
+        :return: job info of the job containing jobstatus anf filepath
         """
         try:
             self.logger.info("--------------------- getting data from redis -----------------------")
+
             jobInfo: List = self.getRedisClient().hmget(jobId, [JOB_STATUS_REDIS_KEY, FILE_PATH_REDIS_KEY])
             self.logger.info("------------------------ data from redis: %s ------------------------" % jobInfo)
         except Exception as exc:
@@ -62,7 +63,7 @@ class Worker:
             exit(1)
         return jobInfo
 
-    def makeThumbnail(self, channel, method_frame, header_frame: BasicProperties, body: bytes):
+    def executeProcess(self, channel, method_frame, header_frame: BasicProperties, body: bytes):
         """
         Callback when receiving a message
         This is the main logic of the worker
@@ -84,6 +85,7 @@ class Worker:
         # Update Job status in redis to finished
 
         # acknowledge message if treatment is finished
+        self.logger.info("-------------------------  job %s is finished -----------------------" % jobId)
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     def processJob(self):
@@ -95,7 +97,7 @@ class Worker:
             channel = self.getQueueConnection().channel()
             queueName: str = self.config["queue"]["queueName"]
             channel.queue_declare(queueName, durable=True)
-            channel.basic_consume(queueName, self.makeThumbnail)
+            channel.basic_consume(queueName, self.executeProcess)
             self.logger.info("--------------------- start_consuming -----------------------")
             channel.start_consuming()
         except Exception as exc:
