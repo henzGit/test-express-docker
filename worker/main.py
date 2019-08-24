@@ -2,7 +2,7 @@ from concurrent.futures import ProcessPoolExecutor
 from typing import Dict, Hashable, Any
 from helper import readConf, setupLogging
 from logging import Logger
-from worker import processJob
+from worker import Worker
 
 if __name__ == "__main__":
     logger: Logger = setupLogging()
@@ -12,4 +12,5 @@ if __name__ == "__main__":
     executor: ProcessPoolExecutor = ProcessPoolExecutor(max_workers=nbWorkers)
     for workerId in range(0, nbWorkers):
         logger.info("Submitting job for worker: %s" %workerId)
-        executor.submit(processJob, config["App"], logger)
+        worker: Worker = Worker(config["App"], logger)
+        executor.submit(worker.processJob)
