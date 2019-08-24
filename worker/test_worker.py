@@ -6,7 +6,7 @@ from typing import Dict, Hashable, Any
 from pika import BlockingConnection, ConnectionParameters
 from logging import Logger
 from redis import Redis
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 from typing import List, Tuple
 from job_status_enum import JobStatusEnum
 from constants import FILE_PATH_REDIS_KEY, JOB_STATUS_REDIS_KEY, EMPTY_STR, \
@@ -22,7 +22,7 @@ class TestWorker(unittest.TestCase):
     }
     worker: Worker = Worker(config, logger)
     exception: Exception = Exception('Boom!')
-    jobId: int = 1
+    jobId: int = '1'
     filePath: str = '/img/uploaded/1566650412191_test.png'
     thumbnailPath: str = '/img/thumbnail/1566650412191_test.png'
     width: int = 100
@@ -79,7 +79,7 @@ class TestWorker(unittest.TestCase):
     @patch.object(Worker, 'getRedisClient')
     def test_getJobInfoFromRedisSuccessful(self, mockGetRedisClient: MagicMock):
         returnValueHmget: List = [b'0', b'img/uploaded/1566620014076_test.png', b'']
-        returnValueFunc: Tuple = (0, 'img/uploaded/1566620014076_test.png')
+        returnValueFunc: Tuple = (JobStatusEnum(0), 'img/uploaded/1566620014076_test.png')
         mockGetRedisClient.return_value.hmget.return_value = returnValueHmget
         mockResult: Tuple = self.worker.getJobInfoFromRedis(self.jobId)
         mockGetRedisClient.assert_called_once()
@@ -246,6 +246,30 @@ class TestWorker(unittest.TestCase):
         mockImage.assert_called_once_with(filename=self.filePath)
         mockImgContextManager.resize.assert_called_once_with(self.width, self.height)
         mockImgContextManager.save.assert_called_once_with(filename=self.thumbnailPath)
+
+    @patch.object(Worker, 'makeThumbnail')
+    @patch.object(Worker, 'updateJobInfo')
+    @patch.object(Worker, 'getJobInfoFromRedis')
+    def test_executeProcessSuccessful(self,
+                                      mockGetJobInfoFromRedis: MagicMock,
+                                      mockUpdateJobInfo: MagicMock,
+                                      mockMakeThumbnail: MagicMock,
+                                      ):
+        mockGetJobInfoFromRedis.return_value = (JobStatusEnum.READY_FOR_PROCESSING, self.filePath)
+        mockUpdateJobInfo.return_value = JobStatusEnum.PROCESSING
+        mockMakeThumbnail.return_value = self.thumbnailPath
+        mockChannel: MagicMock = MagicMock()
+        mockMethodFrame: MagicMock = MagicMock()
+        self.worker.executeProcess(mockChannel, mockMethodFrame, None, b'1')
+        mockGetJobInfoFromRedis.assert_called_once_with(self.jobId)
+        mockMakeThumbnail.assert_called_once_with(self.filePath)
+        self.assertEqual(mockUpdateJobInfo.call_count, 2)
+        mockUpdateJobInfo.assert_called_with(
+            self.jobId, JobStatusEnum.PROCESSING, JobStatusEnum.COMPLETE, self.thumbnailPath
+        )
+
+
+
 
 
 if __name__ == '__main__':
