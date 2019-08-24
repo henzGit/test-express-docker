@@ -9,10 +9,10 @@ import { SYS_ERR_FILE_UPLOAD } from "../lib/constant/constants";
 export default class FileService implements FileServiceInterface {
     constructor (
         // Path to store file
-        private readonly dirPath: string,
+        private readonly uploadedPath: string,
         private readonly logger: Logger
     ) {
-        this.dirPath = dirPath;
+        this.uploadedPath = uploadedPath;
         this.logger = logger;
     }
 
@@ -51,6 +51,6 @@ export default class FileService implements FileServiceInterface {
      */
     public getFilePath(filename: string) : string {
         const currTime: number = new Date().getTime();
-        return this.dirPath + currTime + '_' + filename;
+        return this.uploadedPath + currTime + '_' + filename;
     }
 }

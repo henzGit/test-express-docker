@@ -11,7 +11,7 @@ import { Options } from "amqplib";
 import { logger } from "./logging";
 
 // Read config values
-const dirPath: string = config.get('App.fileStorage.dirPath');
+const uploadedPath: string = config.get('App.fileStorage.uploadedPath');
 const redisHost: string = config.get('App.kvs.host');
 const redisIndexKey: string = config.get('App.kvs.indexKey');
 const queueName: string = config.get('App.queue.queueName');
@@ -22,7 +22,7 @@ const queueConf: Options.Connect = {
     port: queuePort,
 };
 
-const fileService: FileServiceInterface = new FileService(dirPath, logger);
+const fileService: FileServiceInterface = new FileService(uploadedPath, logger);
 const kvsService: KvsServiceInterface = new KvsService(redisHost, redisIndexKey, logger);
 const queueService: QueueServiceInterface = new QueueService(queueConf, queueName, logger);
 const imageController: BaseControllerInterface = new ImageController(
