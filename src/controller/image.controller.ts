@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import * as HttpCodes from 'http-status-codes';
 import BaseControllerInterface from "../lib/interface/base.controller.interface";
 import { Router } from "express";
@@ -20,7 +19,8 @@ import {
   INFO_READY_FOR_PROCESSING,
   INFO_PROCESSING,
   INFO_ERROR_DURING_PROCESSING,
-  ERR_THUMBNAIL_FILE_PATH_EMPTY
+  ERR_THUMBNAIL_FILE_PATH_EMPTY,
+  ERR_THUMBNAIL_FILE_NOT_EXIST
 } from "../lib/constant/constants";
 import { validationResult, Result, ValidationError } from "express-validator";
 
@@ -191,6 +191,10 @@ export default class ImageController implements BaseControllerInterface {
     }
     if (jobStatus === JOB_STATUS.COMPLETE && thumbnailPath) {
       // TODO Check file exists in file storage
+      let thumbnailExistFlg: boolean = await this.fileService.checkFileExist(thumbnailPath);
+      if (!thumbnailExistFlg) {
+        res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_THUMBNAIL_FILE_NOT_EXIST);
+      }
 
       // Fetch image from file storage and return it to API caller
       this.logger.info("fetching image and return it to API caller");
