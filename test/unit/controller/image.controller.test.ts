@@ -308,17 +308,13 @@ describe('ImageController', () => {
               thumbnailPath: THUMBNAIL_PATH
             }
         );
-
-
-
-
       });
     });
 
     afterAll(async () => {
           await listenedServer.close();
           mockFs.restore();
-      });
+    });
 });
 
 
