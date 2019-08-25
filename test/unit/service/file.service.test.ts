@@ -52,7 +52,6 @@ describe('FileService', () => {
       });
     });
 
-    //TODO Test checkFileExist function
     describe('checkFileExist(filePath: string) function', () => {
       it(`should return true if file exists`,
           async () => {
@@ -62,7 +61,15 @@ describe('FileService', () => {
             expect(fs.existsSync(SRC_IMG)).toBe(true);
             expect(await fileService.checkFileExist(SRC_IMG))
                 .toBe(true);
-          });
+        });
+      it(`should return false if file does not exist`,
+          async () => {
+            createMockFs();
+            logger = configureAndGetLogger();
+            fileService = getFileServiceMock(TEST_DIR, logger);
+            expect(await fileService.checkFileExist("SRC_IMG"))
+                .toBe(false);
+      });
     });
 
     afterAll(async () => {
