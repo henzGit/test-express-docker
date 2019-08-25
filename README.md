@@ -38,5 +38,7 @@ Python3.7
 # Notes
 * All configuration values (for both API and worker) are located in `default.yaml`
 * Python is chosen for the worker language due to its simplicity and available binding with Image Magick 
-* Many optimizations are omitted due to time constraint
+* As much as possible implementation is lazy for both Queue Server connection (RabbitMQ) and KVS Server (Redis)
+* Many optimizations like retry mechanism, etc are omitted due to time constraint
 * API security is not implemented due to time constraint. Normally each end point should be protected by JWT Access Token
+* Unit tests are implemented and nearly cover 100% of code (except for some parts)
