@@ -23,7 +23,7 @@ import {
   SYS_ERR_FILE_UPLOAD,
   SUCCESS_IMG_PROCESSING,
   ERR_PUT_JOB_QUEUE,
-  ERR_PARAM_INVALID_VALUE
+  ERR_PARAM_INVALID_VALUE, ERR_GET_IMAGE_INFO_KVS
 } from "../../../src/lib/constant/constants";
 import { SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE }
   from "../../testConstants";
@@ -49,8 +49,10 @@ describe('ImageController', () => {
     let queueServiceStub: QueueServiceInterface;
     let channelMock: ChannelMock;
     let queueConf: Options.Connect;
+    let imageId: number;
 
     beforeAll(async () => {
+      imageId = 1;
       // Mock with virtual filesystem for testing
       createMockFs();
       expect(fs.existsSync(SRC_IMG)).toBe(true);
@@ -93,7 +95,7 @@ describe('ImageController', () => {
                   .attach('image', SRC_IMG)
                   .expect(OK)
                   .expect({
-                    imageId: 1,
+                    imageId: imageId,
                     msg: SUCCESS_IMG_PROCESSING
                   });
             });
@@ -183,6 +185,29 @@ describe('ImageController', () => {
                       });
                     })
           });
+      it(`should return a JSON object with the message "${ERR_GET_IMAGE_INFO_KVS}"
+              and a status code of "${INTERNAL_SERVER_ERROR}" if get info from redis
+              server failed`,
+      async () => {
+          await listenedServer.close();
+          createMockFs();
+          logger = configureAndGetLogger();
+          const kvsServiceNewStub = stubObject<KvsServiceInterface>(
+              kvsServiceStub,
+              { getImageInfo: undefined }
+          );
+          const imageController: ImageController = new ImageController(
+              fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+          );
+          testServer = getTestServerByController(imageController);
+          listenedServer = await testServer.getInstance().listen(testServer.getPort());
+          agent = supertest.agent(listenedServer);
+          await agent.get(`/image/${imageId}/thumbnail`)
+                .expect(INTERNAL_SERVER_ERROR)
+                .expect(ERR_GET_IMAGE_INFO_KVS)
+          });
+
+
 
       });
 
