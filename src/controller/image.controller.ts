@@ -1,3 +1,4 @@
+import * as fs from "fs";
 import * as HttpCodes from 'http-status-codes';
 import BaseControllerInterface from "../lib/interface/base.controller.interface";
 import { Router } from "express";
@@ -178,11 +179,9 @@ export default class ImageController implements BaseControllerInterface {
       res.status(HttpCodes.NOT_FOUND).send(ERR_NOT_EXIST_IMAGE_ID);
       return res;
     }
-
     // Get return DTO
     this.logger.info("get thumbnail return dto from image info");
     let getThumbnailRetDto: GetImageRetDto = this.getThumbnailRetDtoFromImageInfo(imageInfo);
-
     let jobStatus: number = getThumbnailRetDto.jobStatus;
     let thumbnailPath: string = getThumbnailRetDto.thumbnailPath;
 
@@ -191,11 +190,11 @@ export default class ImageController implements BaseControllerInterface {
       return res;
     }
     if (jobStatus === JOB_STATUS.COMPLETE && thumbnailPath) {
-      this.logger.info(jobStatus);
-      this.logger.info(thumbnailPath);
+      // TODO Check file exists in file storage
 
-      // Fetch image from file storage
-      // Return file to API caller
+      // Fetch image from file storage and return it to API caller
+      this.logger.info("fetching image and return it to API caller");
+      return res.sendFile(thumbnailPath);
     }
     res.send(getThumbnailRetDto);
   }
