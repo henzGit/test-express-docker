@@ -14,7 +14,7 @@ import KvsService from "../../../src/service/kvs.service";
 import QueueService from "../../../src/service/queue.service";
 import ChannelMock from "../../mock/channel.mock";
 
-import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from "http-status-codes";
+import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST, NOT_FOUND } from "http-status-codes";
 import {
   ERR_CODE_MINUS_ONE,
   ERR_FILE_UPLOAD,
@@ -23,7 +23,9 @@ import {
   SYS_ERR_FILE_UPLOAD,
   SUCCESS_IMG_PROCESSING,
   ERR_PUT_JOB_QUEUE,
-  ERR_PARAM_INVALID_VALUE, ERR_GET_IMAGE_INFO_KVS
+  ERR_PARAM_INVALID_VALUE,
+  ERR_GET_IMAGE_INFO_KVS,
+  ERR_NOT_EXIST_IMAGE_ID
 } from "../../../src/lib/constant/constants";
 import { SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE }
   from "../../testConstants";
@@ -206,6 +208,30 @@ describe('ImageController', () => {
                 .expect(INTERNAL_SERVER_ERROR)
                 .expect(ERR_GET_IMAGE_INFO_KVS)
           });
+      it(`should return a JSON object with the message "${ERR_NOT_EXIST_IMAGE_ID}"
+              and a status code of "${NOT_FOUND}" if requested imageId does not exist`,
+      async () => {
+            await listenedServer.close();
+            createMockFs();
+            logger = configureAndGetLogger();
+            const kvsServiceNewStub = stubObject<KvsServiceInterface>(
+                kvsServiceStub,
+                { getImageInfo: [null, null] }
+            );
+            const imageController: ImageController = new ImageController(
+                fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+            );
+            testServer = getTestServerByController(imageController);
+            listenedServer = await testServer.getInstance().listen(testServer.getPort());
+            agent = supertest.agent(listenedServer);
+            await agent.get(`/image/${imageId}/thumbnail`)
+                .expect(NOT_FOUND)
+                .expect(ERR_NOT_EXIST_IMAGE_ID)
+          });
+
+
+
+
 
 
 
