@@ -19,9 +19,35 @@ Local FileSystem
 ## API
 ### Language
 ```NodeJS 10.6.2``` (LTS) with ```TypeScript 3.5.3```
+### Main dependencies
+List of dependencis for app can be found in the file ```package.json``` in the main directory
+```
+"amqplib": "^0.5.5",
+"bluebird": "^3.5.5",
+"body-parser": "^1.18.2",
+"config": "^3.2.2",
+"express": "^4.16.3",
+"express-fileupload": "^1.1.5",
+"express-validator": "^6.1.1",
+"http-status-codes": "^1.3.2",
+"ioredis": "^4.14.0",
+"js-yaml": "^3.13.1",
+"log4js": "^5.0.0",
+"swagger-jsdoc": "^3.4.0",
+"swagger-ui-express": "^4.0.7"
+```
+
 ## Worker
 ### Language
 ```Python3.7```
+### Main dependencies
+List of dependencis for worker can be found in the file ```requirements.txt``` in ```worker``` folder
+```
+pika==1.1.0
+redis==3.3.7
+pyyaml==5.1.2
+Wand==0.5.6
+```
 
 # Available commands
 - Run system: `docker-compose up`
