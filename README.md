@@ -18,10 +18,10 @@ Simple KVS using Redis
 Local FileSystem 
 ## API
 ### Language
-NodeJS with TypeScript
+```NodeJS 10.6.2``` (LTS) with TypeScript ```3.5.3```
 ## Worker
 ### Language
-Python3.7
+```Python3.7```
 
 # Available commands
 - Run system: `docker-compose up`
@@ -35,10 +35,14 @@ Python3.7
 - The application runs on `http://localhost:3000/`
 - Swagger documentation for the API can be found on `http://localhost:3000/docs/`
 
+# Tested Version
+* Docker version: ```Docker version 19.03.1, build 74b1e89e8a```
+* Docker-compose version: ```docker-compose version 1.20.0, build ca8d3c6```
+
 # Notes
 * All configuration values (for both API and worker) are located in `default.yaml`
-* Python is chosen for the worker language due to its simplicity and available binding with Image Magick 
+* Python is chosen for the worker language due to its simplicity and available binding with ```Image Magick``` via ```Wand``` library 
 * As much as possible implementation is lazy for both Queue Server connection (RabbitMQ) and KVS Server (Redis)
 * Many optimizations like retry mechanism, etc are omitted due to time constraint
-* API security is not implemented due to time constraint. Normally each end point should be protected by JWT Access Token
+* API security is not implemented due to time constraint. Normally each end point should be protected by ```JWT``` Access Token
 * Unit tests are implemented and nearly cover 100% of code (except for some parts)
