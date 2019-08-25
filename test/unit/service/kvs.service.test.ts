@@ -15,9 +15,12 @@ describe('KvsService', () => {
     let logger: Logger;
     let imageId: number;
     let redisHost: string;
+    let expectedImageId: number;
+    let imageInfo: object|undefined;
 
     beforeAll(async () => {
       redisHost = "test";
+      expectedImageId = 1;
       logger = configureAndGetLogger();
       kvsService = new KvsService(redisHost, REDIS_INDEX_KEY, logger);
       kvsService.setRedisClient(redisClientMock);
@@ -28,7 +31,7 @@ describe('KvsService', () => {
       async () => {
           // check return value of kvsService.putImageInfo
           imageId = await kvsService.putImageInfo(DST_IMG);
-          expect(imageId).toBe(1);
+          expect(imageId).toBe(expectedImageId);
           // check if redisIndexKey is updated correctly
           const redisIndexKeyValue: string = await redisClientMock.get(REDIS_INDEX_KEY);
           expect(redisIndexKeyValue).toBe(String(imageId));
@@ -80,6 +83,25 @@ describe('KvsService', () => {
           expect(newKvsService.getRedisClient(IORedisMock)).toBeInstanceOf(IORedisMock);
         });
     });
+
+    describe('test getImageInfo(imageId: number) function', () => {
+      it(`should return image info if successful`,
+      async () => {
+            // check return value of kvsService.getImageInfo
+            imageInfo = await kvsService.getImageInfo(expectedImageId);
+            console.log(imageInfo);
+            expect(imageInfo).toStrictEqual(
+                [
+                    String(JOB_STATUS.READY_FOR_PROCESSING),
+                    EMPTY_STR
+                ]
+            );
+
+          });
+    });
+
+
+
 
     afterAll(async () => {
     });
