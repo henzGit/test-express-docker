@@ -3,6 +3,7 @@ export const ERR_PARAM_INVALID_VALUE = "Invalid value";
 
 export const ERR_FILE_UPLOAD = "File upload failed.";
 export const ERR_SAVE_IMAGE_INFO_KVS = "Saving image info failed.";
+export const ERR_GET_IMAGE_INFO_KVS = "Getting image info failed.";
 export const ERR_PUT_JOB_QUEUE = "Sending job failed.";
 
 export const ERR_CODE_MINUS_ONE = -1;
