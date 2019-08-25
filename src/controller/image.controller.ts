@@ -194,6 +194,7 @@ export default class ImageController implements BaseControllerInterface {
       let thumbnailExistFlg: boolean = await this.fileService.checkFileExist(thumbnailPath);
       if (!thumbnailExistFlg) {
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_THUMBNAIL_FILE_NOT_EXIST);
+        return res;
       }
       // Fetch image from file storage and return it to API caller
       this.logger.info("fetching image and return it to API caller");
