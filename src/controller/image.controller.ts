@@ -11,7 +11,11 @@ import {
   ERR_CODE_MINUS_ONE,
   ERR_FILE_UPLOAD,
   ERR_SAVE_IMAGE_INFO_KVS,
-  ERR_PUT_JOB_QUEUE
+  ERR_PUT_JOB_QUEUE,
+  ERR_GET_IMAGE_INFO_KVS,
+  INDEX_JOBSTATUS,
+  INDEX_THUMBNAILPATH,
+  ERR_NOT_EXIST_IMAGE_ID
 } from "../lib/constant/constants";
 import { validationResult, Result, ValidationError } from "express-validator";
 
@@ -149,7 +153,6 @@ export default class ImageController implements BaseControllerInterface {
     this.logger.info("getImageThumbnail API");
 
     const errors: Result<ValidationError> = validationResult(req);
-
     // Input validation
     if (!errors.isEmpty()) {
       return res.status(HttpCodes.BAD_REQUEST)
@@ -157,13 +160,27 @@ export default class ImageController implements BaseControllerInterface {
     }
 
     const imageId: number = parseInt(req.params.imageId);
-
     // Get image info from KVS Server
     this.logger.info("get image info from KVS server");
-    const imageInfo: object|undefined = await this.kvsService.getImageInfo(imageId);
-    this.logger.info(imageInfo);
+    const imageInfo: string[]|undefined = await this.kvsService.getImageInfo(imageId);
+    //this.logger.info(imageInfo);
+    // Case of KVS Server returns nothing
+    if (!imageInfo) {
+      res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_GET_IMAGE_INFO_KVS);
+      return res;
+    }
+    // Case for non existing imageId
+    if (!imageInfo[INDEX_JOBSTATUS]) {
+      res.status(HttpCodes.NOT_FOUND).send(ERR_NOT_EXIST_IMAGE_ID);
+      return res;
+    }
 
     // Fetch image from file storage
+    let jobStatus: number = parseInt(imageInfo[INDEX_JOBSTATUS]);
+    let thumbnailPath: string = imageInfo[INDEX_THUMBNAILPATH];
+    this.logger.info(jobStatus);
+    this.logger.info(thumbnailPath);
+
 
     // Return file to API caller
 
