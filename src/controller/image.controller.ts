@@ -27,6 +27,7 @@ import FileServiceInterface from "../lib/interface/file.service.interface";
 import QueueServiceInterface from "../lib/interface/queue.service.interface";
 import { Logger } from "log4js";
 import { JOB_STATUS } from "../lib/constant/jobStatus.enum";
+import { GetImageRetDto } from "../lib/dto/get.image.ret.dto";
 
 export default class ImageController implements BaseControllerInterface {
   constructor (
@@ -119,12 +120,10 @@ export default class ImageController implements BaseControllerInterface {
       return res;
     }
 
-    const postImgRetDto: object = {
+    res.json({
       msg: SUCCESS_IMG_PROCESSING,
       imageId: imageId
-    };
-
-    res.json(postImgRetDto);
+    });
   }
 
   /**
@@ -180,8 +179,12 @@ export default class ImageController implements BaseControllerInterface {
     }
 
     // Get return DTO
-    let getThumbnailRetDto: object = this.getThumbnailRetDtoFromImageInfo(imageInfo);
+    this.logger.info("get thumbnail return dto from image info");
+    let getThumbnailRetDto: GetImageRetDto = this.getThumbnailRetDtoFromImageInfo(imageInfo);
     this.logger.info(getThumbnailRetDto);
+
+    let jobStatus: number = getThumbnailRetDto.jobStatus;
+    let thumbnailPath: string = getThumbnailRetDto.thumbnailPath;
 
     // Fetch image from file storage
     // Return file to API caller
@@ -194,7 +197,7 @@ export default class ImageController implements BaseControllerInterface {
    * @param imageInfo image info from Redis KVS
    * @returns DTO response object for Get thumbnail image route
    */
-  public getThumbnailRetDtoFromImageInfo(imageInfo: string[]): object {
+  public getThumbnailRetDtoFromImageInfo(imageInfo: string[]): GetImageRetDto {
     let jobStatus: number = parseInt(imageInfo[INDEX_JOBSTATUS]);
     let thumbnailPath: string = imageInfo[INDEX_THUMBNAILPATH];
     let msg: string = "";
