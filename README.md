@@ -56,7 +56,7 @@ img:
     thumbnail: directory to store thumbnail image files
     uploaded: directory to store original uploaded files
 scripts: directory to store all necessary scripts for booting up application
-src: 
+src (Node): 
     controller: directory containing source code for main controllers
     lib:
         constant: directory containing all constants used in the appliacation
@@ -64,12 +64,12 @@ src:
         interface: directory containing all interfaces in the application
         validator: directory containing source code of custom validator logic
     service: directory containing source code for main services
-test:
+test (Node):
     mock: directory containing custom mock files
     unit:
         controller: directory containing unit tests for controller
         service: directory containing unit tests for services
-worker: directory containing source code of worker (Python3)
+worker (Python3): directory containing source code of worker
 ```
 
 
