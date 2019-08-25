@@ -1,5 +1,5 @@
 export const ERR_MSG_NO_FILE = "No files were uploaded.";
-export const ERR_PARAM_INVALID_VALUE = "Invalid value.";
+export const ERR_PARAM_INVALID_VALUE = "Invalid value";
 
 export const ERR_FILE_UPLOAD = "File upload failed.";
 export const ERR_SAVE_IMAGE_INFO_KVS = "Saving image info failed.";

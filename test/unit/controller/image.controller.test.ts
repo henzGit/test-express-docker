@@ -22,9 +22,9 @@ import {
   ERR_SAVE_IMAGE_INFO_KVS,
   SYS_ERR_FILE_UPLOAD,
   SUCCESS_IMG_PROCESSING,
-  ERR_PUT_JOB_QUEUE
-}
-  from "../../../src/lib/constant/constants";
+  ERR_PUT_JOB_QUEUE,
+  ERR_PARAM_INVALID_VALUE
+} from "../../../src/lib/constant/constants";
 import { SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE }
   from "../../testConstants";
 
@@ -63,7 +63,7 @@ describe('ImageController', () => {
       );
       channelMock = new ChannelMock();
       queueConf = {
-        hostname: "host",
+        hostname: 'host',
         port: 1234,
       };
       queueServiceStub = getQueueServiceStub(queueConf, TEST_QUEUE, logger);
@@ -166,9 +166,22 @@ describe('ImageController', () => {
     });
 
     describe('GET API: "/image/{imageId}/thumbnail:"', () => {
-      it(`should return a JSON object with the message "${ERR_MSG_NO_FILE}"
-              and a status code of "${BAD_REQUEST}" if no file is specified`,
+      it(`should return a JSON object with the message "${ERR_PARAM_INVALID_VALUE}"
+              and a status code of "${BAD_REQUEST}" if imageId is not integer`,
           async () => {
+                const wrongImageId: string = 'fdsfds';
+                await agent.get(`/image/${wrongImageId}/thumbnail`)
+                    .expect(BAD_REQUEST)
+                    .expect(res => {
+                      const errors: Array<object> = res.body.errors;
+                      expect(errors).toHaveLength(1);
+                      expect(errors[0]).toEqual({
+                          value: wrongImageId,
+                          msg: ERR_PARAM_INVALID_VALUE,
+                          param: 'imageId',
+                          location: 'params'
+                      });
+                    })
           });
 
       });
