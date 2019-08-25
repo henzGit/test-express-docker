@@ -19,7 +19,7 @@ import {
   INFO_READY_FOR_PROCESSING,
   INFO_PROCESSING,
   INFO_ERROR_DURING_PROCESSING,
-  ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS
+  ERR_THUMBNAIL_FILE_PATH_EMPTY
 } from "../lib/constant/constants";
 import { validationResult, Result, ValidationError } from "express-validator";
 
@@ -185,19 +185,17 @@ export default class ImageController implements BaseControllerInterface {
 
     let jobStatus: number = getThumbnailRetDto.jobStatus;
     let thumbnailPath: string = getThumbnailRetDto.thumbnailPath;
-    this.logger.info(jobStatus);
-    this.logger.info(thumbnailPath);
 
     if (jobStatus === JOB_STATUS.COMPLETE && !thumbnailPath) {
-      res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS);
+      res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_THUMBNAIL_FILE_PATH_EMPTY);
       return res;
     }
     if (jobStatus === JOB_STATUS.COMPLETE && thumbnailPath) {
+      this.logger.info(jobStatus);
+      this.logger.info(thumbnailPath);
+
       // Fetch image from file storage
       // Return file to API caller
-
-
-
     }
     res.send(getThumbnailRetDto);
   }

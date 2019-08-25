@@ -30,7 +30,7 @@ import {
   INFO_PROCESSING,
   INFO_READY_FOR_PROCESSING,
   SUCCESS_GET_IMG_THUMBNAIL,
-  ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS
+  ERR_THUMBNAIL_FILE_PATH_EMPTY
 } from "../../../src/lib/constant/constants";
 import {
   SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE, EMPTY_STR, THUMBNAIL_PATH, THROW_ERR_STR
@@ -255,9 +255,9 @@ describe('ImageController', () => {
                 agent = supertest.agent(listenedServer);
                 await agent.get(`/image/${imageId}/thumbnail`)
                     .expect(INTERNAL_SERVER_ERROR)
-                    .expect(ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS)
+                    .expect(ERR_THUMBNAIL_FILE_PATH_EMPTY)
               });
-      it(`should return a JSON object with the message ${ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS}
+      it(`should return a JSON object with the message ${ERR_THUMBNAIL_FILE_PATH_EMPTY}
               and a status code of "${INTERNAL_SERVER_ERROR}" if request is successful`,
           async () => {
             await listenedServer.close();
