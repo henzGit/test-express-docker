@@ -22,7 +22,7 @@ class TestWorker(unittest.TestCase):
     }
     worker: Worker = Worker(config, logger)
     exception: Exception = Exception('Boom!')
-    jobId: int = '1'
+    jobId: str = '1'
     filePath: str = '/img/uploaded/1566650412191_test.png'
     thumbnailPath: str = '/img/thumbnail/1566650412191_test.png'
     width: int = 100
