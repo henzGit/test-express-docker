@@ -25,10 +25,15 @@ import {
   ERR_PUT_JOB_QUEUE,
   ERR_PARAM_INVALID_VALUE,
   ERR_GET_IMAGE_INFO_KVS,
-  ERR_NOT_EXIST_IMAGE_ID
+  ERR_NOT_EXIST_IMAGE_ID,
+  INFO_ERROR_DURING_PROCESSING,
+  INFO_PROCESSING,
+  INFO_READY_FOR_PROCESSING,
+  SUCCESS_GET_IMG_THUMBNAIL
 } from "../../../src/lib/constant/constants";
 import { SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE }
   from "../../testConstants";
+import { JOB_STATUS } from "../../../src/lib/constant/jobStatus.enum";
 
 import { Server } from "http";
 import { FileArray } from "express-fileupload";
@@ -52,6 +57,7 @@ describe('ImageController', () => {
     let channelMock: ChannelMock;
     let queueConf: Options.Connect;
     let imageId: number;
+    let imageController: BaseControllerInterface;
 
     beforeAll(async () => {
       imageId = 1;
@@ -73,7 +79,7 @@ describe('ImageController', () => {
       queueServiceStub = getQueueServiceStub(queueConf, TEST_QUEUE, logger);
       queueServiceStub.setChannel(channelMock);
 
-      const imageController: BaseControllerInterface = new ImageController(
+      imageController = new ImageController(
           fileServiceStub, kvsServiceStub , queueServiceStub, logger
       );
       testServer = getTestServerByController(imageController);
@@ -112,10 +118,10 @@ describe('ImageController', () => {
                   fileServiceStub,
                   { putImage: SYS_ERR_FILE_UPLOAD }
               );
-              const imageController: ImageController = new ImageController(
+              const newImageController: ImageController = new ImageController(
                   fileServiceNewStub, kvsServiceStub, queueServiceStub, logger
               );
-              testServer = getTestServerByController(imageController);
+              testServer = getTestServerByController(newImageController);
               listenedServer = await testServer.getInstance().listen(testServer.getPort());
               agent = supertest.agent(listenedServer);
               await agent.post('/image')
@@ -134,10 +140,10 @@ describe('ImageController', () => {
                   kvsServiceStub,
                   { putImageInfo: ERR_CODE_MINUS_ONE }
               );
-              const imageController: ImageController = new ImageController(
+              const newImageController: ImageController = new ImageController(
                  fileServiceStub , kvsServiceNewStub, queueServiceStub, logger
               );
-              testServer = getTestServerByController(imageController);
+              testServer = getTestServerByController(newImageController);
               listenedServer = await testServer.getInstance().listen(testServer.getPort());
               agent = supertest.agent(listenedServer);
               await agent.post('/image')
@@ -156,10 +162,10 @@ describe('ImageController', () => {
                   queueServiceStub,
                   { putJob: false }
               );
-              const imageController: ImageController = new ImageController(
+              const newImageController: ImageController = new ImageController(
                   fileServiceStub , kvsServiceStub , queueServiceNewStub, logger
               );
-              testServer = getTestServerByController(imageController);
+              testServer = getTestServerByController(newImageController);
               listenedServer = await testServer.getInstance().listen(testServer.getPort());
               agent = supertest.agent(listenedServer);
               await agent.post('/image')
@@ -198,10 +204,10 @@ describe('ImageController', () => {
               kvsServiceStub,
               { getImageInfo: undefined }
           );
-          const imageController: ImageController = new ImageController(
+          const newImageController: ImageController = new ImageController(
               fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
           );
-          testServer = getTestServerByController(imageController);
+          testServer = getTestServerByController(newImageController);
           listenedServer = await testServer.getInstance().listen(testServer.getPort());
           agent = supertest.agent(listenedServer);
           await agent.get(`/image/${imageId}/thumbnail`)
@@ -218,24 +224,40 @@ describe('ImageController', () => {
                 kvsServiceStub,
                 { getImageInfo: [null, null] }
             );
-            const imageController: ImageController = new ImageController(
+            const newImageController: ImageController = new ImageController(
                 fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
             );
-            testServer = getTestServerByController(imageController);
+            testServer = getTestServerByController(newImageController);
             listenedServer = await testServer.getInstance().listen(testServer.getPort());
             agent = supertest.agent(listenedServer);
             await agent.get(`/image/${imageId}/thumbnail`)
                 .expect(NOT_FOUND)
                 .expect(ERR_NOT_EXIST_IMAGE_ID)
           });
+      });
 
-
-
-
-
+    describe('Test getThumbnailRetDtoFromImageInfo(imageInfo: string[])', () => {
+      it(`should return ${INFO_READY_FOR_PROCESSING} message when
+        jobStatus is ${JOB_STATUS.READY_FOR_PROCESSING}`,
+          () => {
 
 
       });
+      it(`should return ${INFO_PROCESSING} message when jobStatus is 
+        ${JOB_STATUS.PROCESSING}`,
+            () => {
+      });
+      it(`should return ${INFO_ERROR_DURING_PROCESSING} message when 
+        jobStatus is ${JOB_STATUS.ERROR_DURING_PROCESSING}`,
+          () => {
+      });
+      it(`should return ${SUCCESS_GET_IMG_THUMBNAIL} message when 
+        jobStatus is ${JOB_STATUS.COMPLETE}`,
+          () => {
+      });
+
+
+    });
 
     afterAll(async () => {
           await listenedServer.close();

@@ -49,7 +49,7 @@ describe('FileService', () => {
     describe.skip('getFilePath(filename: string) function', () => {
       it(`should return filepath containing both testDir and srcImage`,
           async () => {
-          });
+      });
     });
 
     afterAll(async () => {
