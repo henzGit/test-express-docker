@@ -70,8 +70,8 @@ export default class KvsService implements KvsServiceInterface {
    * @param imageId image id to be search for
    * @returns image info containing job status and thumbnail path
    */
-  public async getImageInfo(imageId: number): Promise<object|undefined> {
-    let imageInfo: object|undefined;
+  public async getImageInfo(imageId: number): Promise<string[]|undefined> {
+    let imageInfo: string[]|undefined;
     try {
       this.logger.info(`trying to get image info from redis with imageId: ${imageId}`);
       imageInfo = await this.getRedisClient(IORedis).hmget(
