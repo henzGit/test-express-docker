@@ -95,7 +95,7 @@ export default class ImageController implements BaseControllerInterface {
       return res;
     }
 
-    // Put image info into kvs server
+    // Put image info into KVS server
     this.logger.info("put image info into kvs server");
     const imageId: number = await this.kvsService.putImageInfo(filePath);
     if (imageId === ERR_CODE_MINUS_ONE) {
@@ -156,6 +156,14 @@ export default class ImageController implements BaseControllerInterface {
           .json({errors: errors.array()});
     }
 
+    const imageId: number = parseInt(req.params.imageId);
+
+    // Get image info from KVS Server
+    this.logger.info(`getting image info from KVS server for imageId: ${imageId}`);
+
+    // Fetch image from file storage
+
+    // Return file to API caller
 
 
     res.send(SUCCESS_GET_IMG_THUMBNAIL);
