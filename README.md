@@ -100,3 +100,4 @@ worker (Python3): directory containing source code of worker
 * Only one configuration file is given ```default.yaml``` due to time constraint. Normally we need to have multiple configuration files based on each environment such as staging and production. 
 * ```yarn``` is used instead of ```npm``` for installing node modules 
 * Application runs on pure ```HTTP``` for development purpose. A certificate is needed to run on ```HTTPS``` (Future consideration)
+* No security vulnerabilities is currently known for both worker and app. (checked using ```yarn audit``` and ```safety -r worker/requirements.txt```)
