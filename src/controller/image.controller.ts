@@ -159,7 +159,9 @@ export default class ImageController implements BaseControllerInterface {
     const imageId: number = parseInt(req.params.imageId);
 
     // Get image info from KVS Server
-    this.logger.info(`getting image info from KVS server for imageId: ${imageId}`);
+    this.logger.info("get image info from KVS server");
+    const imageInfo: object|undefined = await this.kvsService.getImageInfo(imageId);
+    this.logger.info(imageInfo);
 
     // Fetch image from file storage
 

@@ -36,7 +36,7 @@ export default class KvsService implements KvsServiceInterface {
   }
 
   /**
-   * Put information about an image file into redis
+   * Put information about an image file into redis server
    * @param filePath filepath of the image file in storage system
    * @returns image id if successful else -1
    */
@@ -63,6 +63,28 @@ export default class KvsService implements KvsServiceInterface {
       return ERR_CODE_MINUS_ONE;
     }
     return imageId;
+  }
+
+  /**
+   * Get information of an image file from redis server
+   * @param imageId image id to be search for
+   * @returns image info containing job status and thumbnail path
+   */
+  public async getImageInfo(imageId: number): Promise<object|undefined> {
+    let imageInfo: object|undefined;
+    try {
+      this.logger.info(`trying to get image info from redis with imageId: ${imageId}`);
+      imageInfo = await this.getRedisClient(IORedis).hmget(
+          String(imageId),
+          KVS_KEY_JOB_STATUS,
+          KVS_KEY_THUMBNAIL_PATH,
+      );
+    } catch (err) {
+      // TODO handle error
+      this.logger.error(err);
+      return;
+    }
+    return imageInfo;
   }
 
   /**
