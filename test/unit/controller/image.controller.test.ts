@@ -32,7 +32,7 @@ import {
   SUCCESS_GET_IMG_THUMBNAIL,
 } from "../../../src/lib/constant/constants";
 import {
-  SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE, EMPTY_STR, THUMBNAIL_PATH
+  SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE, EMPTY_STR, THUMBNAIL_PATH, THROW_ERR_STR
 } from "../../testConstants";
 import { JOB_STATUS } from "../../../src/lib/constant/jobStatus.enum";
 
@@ -235,7 +235,33 @@ describe('ImageController', () => {
             await agent.get(`/image/${imageId}/thumbnail`)
                 .expect(NOT_FOUND)
                 .expect(ERR_NOT_EXIST_IMAGE_ID)
-          });
+        });
+      it(`should return a JSON object with the message "${SUCCESS_GET_IMG_THUMBNAIL}"
+              and a status code of "${OK}" if request is successful`,
+      async () => {
+            await listenedServer.close();
+            createMockFs();
+            logger = configureAndGetLogger();
+            const kvsServiceNewStub = stubObject<KvsServiceInterface>(
+                kvsServiceStub,
+                { getImageInfo: [String(JOB_STATUS.COMPLETE), THUMBNAIL_PATH] }
+            );
+            const newImageController: ImageController = new ImageController(
+                fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+            );
+            testServer = getTestServerByController(newImageController);
+                listenedServer = await testServer.getInstance().listen(testServer.getPort());
+                agent = supertest.agent(listenedServer);
+                await agent.get(`/image/${imageId}/thumbnail`)
+                    .expect(OK)
+                    .expect(res => {
+                      expect(res.body).toEqual({
+                        msg: SUCCESS_GET_IMG_THUMBNAIL,
+                        jobStatus: JOB_STATUS.COMPLETE,
+                        thumbnailPath: THUMBNAIL_PATH
+                      })
+                    });
+              });
       });
 
     describe('Test getThumbnailRetDtoFromImageInfo(imageInfo: string[])', () => {
