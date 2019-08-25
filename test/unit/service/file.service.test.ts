@@ -52,6 +52,16 @@ describe('FileService', () => {
       });
     });
 
+    //TODO Test checkFileExist function
+    describe.skip('checkFileExist(filePath: string) function', () => {
+      it(`should return false if file does not exist`,
+          async () => {
+            createMockFs();
+            expect(await fileService.checkFileExist("tst.png"))
+                .toBe(false);
+          });
+    });
+
     afterAll(async () => {
       mockFs.restore();
     });
