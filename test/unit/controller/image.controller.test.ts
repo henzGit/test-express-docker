@@ -281,6 +281,36 @@ describe('ImageController', () => {
                 .expect(ERR_THUMBNAIL_FILE_NOT_EXIST);
           });
 
+      it(`should return a JSON object with the message ${INFO_READY_FOR_PROCESSING}
+              and a status code of "${OK}" if request is successful`,
+      async () => {
+            await listenedServer.close();
+            createMockFs();
+            logger = configureAndGetLogger();
+            const kvsServiceNewStub = stubObject<KvsServiceInterface>(
+                kvsServiceStub,
+                { getImageInfo: [String(JOB_STATUS.READY_FOR_PROCESSING),
+                    EMPTY_STR] }
+            );
+            const newImageController: ImageController = new ImageController(
+                fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+            );
+            testServer = getTestServerByController(newImageController);
+            listenedServer = await testServer.getInstance().listen(testServer.getPort());
+            agent = supertest.agent(listenedServer);
+
+            await agent.get(`/image/${imageId}/thumbnail`)
+                .expect(res => {
+                  expect(res.body).toEqual({
+                    msg: INFO_READY_FOR_PROCESSING,
+                    jobStatus: JOB_STATUS.READY_FOR_PROCESSING,
+                    thumbnailPath: EMPTY_STR
+                  })
+                });
+          });
+
+
+
       it.skip(`should return a JSON object with the message ${SUCCESS_GET_IMG_THUMBNAIL}
               and a status code of "${OK}" if request is successful`,
           async () => {
