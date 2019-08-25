@@ -138,6 +138,8 @@ export default class ImageController implements BaseControllerInterface {
    *         description: Request successful
    *         schema:
    *          $ref: '#/definitions/Thumbnail'
+   *       '400':
+   *          description: Invalid imageId param
    *       '404':
    *         description: Requested imageId does not exist
    *       '500':
