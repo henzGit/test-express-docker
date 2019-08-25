@@ -7,7 +7,7 @@ import { FileArray, UploadedFile } from "express-fileupload";
 import { configureAndGetLogger }  from "../../testLogging";
 import { Logger } from "log4js";
 import { createMockFs } from "../../testUtils";
-import { TEST_DIR, SRC_IMG, DST_IMG } from "../../testConstants";
+import { TEST_DIR, SRC_IMG, DST_IMG, THROW_ERR_STR } from "../../testConstants";
 import { SYS_ERR_FILE_UPLOAD } from "../../../src/lib/constant/constants";
 
 describe('FileService', () => {
@@ -62,7 +62,7 @@ function getTestFileArray(filename: string, successful: boolean): FileArray {
         fs.renameSync(filename, path);
   };
   if(!successful) {
-    moveFunc  = (path: string): Promise<void> => {throw "test"};
+    moveFunc  = (path: string): Promise<void> => {throw THROW_ERR_STR};
   }
   const testUploadedFile: UploadedFile = {
     name: filename,

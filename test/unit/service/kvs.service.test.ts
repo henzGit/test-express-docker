@@ -1,6 +1,6 @@
 import KvsServiceInterface from "../../../src/lib/interface/kvs.service.interface";
 import KvsService from "../../../src/service/kvs.service";
-import { DST_IMG, REDIS_INDEX_KEY, EMPTY_STR } from "../../testConstants"
+import { DST_IMG, REDIS_INDEX_KEY, EMPTY_STR, THROW_ERR_STR } from "../../testConstants"
 import { ERR_CODE_MINUS_ONE, KVS_KEY_FILE_PATH,
   KVS_KEY_JOB_STATUS, KVS_KEY_THUMBNAIL_PATH }
   from "../../../src/lib/constant/constants";
@@ -48,7 +48,7 @@ describe('KvsService', () => {
       });
       it(`should return -1 if not successful and data DOES NOT exist in redis`,
       async () => {
-          redisClientMock.incr = () => { throw "test" };
+          redisClientMock.incr = () => { throw THROW_ERR_STR };
           const newKvsService: KvsServiceInterface =
               new KvsService(redisHost, REDIS_INDEX_KEY, logger);
           newKvsService.setRedisClient(redisClientMock);
@@ -99,18 +99,12 @@ describe('KvsService', () => {
 
       it(`should return undefined if unsuccessful`,
           async () => {
-            redisClientMock.hmget = () => { throw "test" };
+            redisClientMock.hmget = () => { throw THROW_ERR_STR };
             // check return value of kvsService.getImageInfo
             imageInfo = await kvsService.getImageInfo(expectedImageId);
             expect(imageInfo).toBeUndefined();
       });
-
-
     });
-
-
-
-
 
     afterAll(async () => {
     });

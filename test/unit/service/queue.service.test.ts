@@ -5,7 +5,7 @@ import { amqpConnectMockSuccess, amqpConnectMockFailed, ConnectionMock }
   from "../../mock/channel.mock";
 import { Logger } from "log4js";
 import { Channel, Connection, Options} from "amqplib";
-import { TEST_QUEUE } from "../../testConstants";
+import { TEST_QUEUE, THROW_ERR_STR } from "../../testConstants";
 import { configureAndGetLogger }  from "../../testLogging";
 // @ts-ignore
 import * as Promise from "bluebird";
@@ -56,7 +56,7 @@ describe('QueueService', () => {
       it(`should return false if a problem occurs with queue server`,
       async () => {
           const newChannelMock: ChannelMock = new ChannelMock();
-          newChannelMock.assertQueue = () => { throw "err" };
+          newChannelMock.assertQueue = () => { throw THROW_ERR_STR };
           const newQueueService: QueueServiceInterface =
             new QueueService(queueConf, TEST_QUEUE, logger);
           newQueueService.setChannel(newChannelMock);
@@ -68,7 +68,7 @@ describe('QueueService', () => {
       it(`should set channel property`,
           async () => {
             const newChannelMock: ChannelMock = new ChannelMock();
-            newChannelMock.assertQueue = () => { throw "err" };
+            newChannelMock.assertQueue = () => { throw THROW_ERR_STR };
             const newQueueService: QueueServiceInterface =
                 new QueueService(queueConf, TEST_QUEUE, logger);
             newQueueService.setChannel(newChannelMock);
@@ -93,7 +93,7 @@ describe('QueueService', () => {
             const newQueueService: QueueServiceInterface =
                 new QueueService(queueConf, TEST_QUEUE, logger);
             newQueueService.createChannel = async () => {return undefined};
-            expect(await newQueueService.getChannel()).toBe(undefined);
+            expect(await newQueueService.getChannel()).toBeUndefined();
           });
 
     });
@@ -107,7 +107,7 @@ describe('QueueService', () => {
           });
       it(`should return undefined when an error occurs during channel creation`,
           async () => {
-            expect(await queueService.createChannel(amqpConnectMockFailed)).toBe(undefined);
+            expect(await queueService.createChannel(amqpConnectMockFailed)).toBeUndefined();
           });
     });
 
