@@ -30,7 +30,7 @@ services:
       - /scripts/wait-for-it.sh
       - test-rabbitmq:5672
       - --
-      - /scripts/start_docker.sh
+      - /scripts/start_docker_app.sh
     depends_on:
       - kvs
       - queue
@@ -45,13 +45,22 @@ services:
       context: .
       dockerfile: dockerfiles/worker.Dockerfile
     volumes:
+      - ./scripts:/scripts
       - ./worker:/app
       - ./config:/config
       - ./img:/img
+    command:
+      - /scripts/wait-for-it.sh
+      - test-redis:6379
+      - --
+      - /scripts/wait-for-it.sh
+      - test-rabbitmq:5672
+      - --
+      - /scripts/start_docker_worker.sh
     depends_on:
+      - api
       - kvs
       - queue
-      - api
     networks:
       - docker_net
 networks:
