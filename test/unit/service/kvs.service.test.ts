@@ -89,16 +89,25 @@ describe('KvsService', () => {
       async () => {
             // check return value of kvsService.getImageInfo
             imageInfo = await kvsService.getImageInfo(expectedImageId);
-            console.log(imageInfo);
             expect(imageInfo).toStrictEqual(
                 [
                     String(JOB_STATUS.READY_FOR_PROCESSING),
                     EMPTY_STR
                 ]
             );
+      });
 
-          });
+      it(`should return undefined if unsuccessful`,
+          async () => {
+            redisClientMock.hmget = () => { throw "test" };
+            // check return value of kvsService.getImageInfo
+            imageInfo = await kvsService.getImageInfo(expectedImageId);
+            expect(imageInfo).toBeUndefined();
+      });
+
+
     });
+
 
 
 
