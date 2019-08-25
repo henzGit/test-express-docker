@@ -16,4 +16,4 @@ App:
     port: 5672
     queueName: test_queue
   worker:
-    numberWorker: 1
+    numberWorker: 5

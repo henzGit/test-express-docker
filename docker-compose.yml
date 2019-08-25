@@ -51,6 +51,7 @@ services:
     depends_on:
       - kvs
       - queue
+      - api
     networks:
       - docker_net
 networks:
