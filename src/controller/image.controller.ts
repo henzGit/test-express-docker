@@ -156,6 +156,7 @@ export default class ImageController implements BaseControllerInterface {
   public async getImageThumbnail(req: Request, res: Response) {
     this.logger.info("getImageThumbnail API");
 
+    this.logger.info("validate input parameters");
     const errors: Result<ValidationError> = validationResult(req);
     // Input validation
     if (!errors.isEmpty()) {
@@ -167,7 +168,6 @@ export default class ImageController implements BaseControllerInterface {
     // Get image info from KVS Server
     this.logger.info("get image info from KVS server");
     const imageInfo: string[]|undefined = await this.kvsService.getImageInfo(imageId);
-    //this.logger.info(imageInfo);
     // Case of KVS Server returns nothing
     if (!imageInfo) {
       res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_GET_IMAGE_INFO_KVS);
@@ -181,6 +181,7 @@ export default class ImageController implements BaseControllerInterface {
 
     // Get return DTO
     let getThumbnailRetDto: object = this.getThumbnailRetDtoFromImageInfo(imageInfo);
+    this.logger.info(getThumbnailRetDto);
 
     // Fetch image from file storage
     // Return file to API caller
@@ -198,9 +199,6 @@ export default class ImageController implements BaseControllerInterface {
     let thumbnailPath: string = imageInfo[INDEX_THUMBNAILPATH];
     let msg: string = "";
 
-    this.logger.info(jobStatus);
-    this.logger.info(thumbnailPath);
-
     switch (jobStatus) {
       case JOB_STATUS.READY_FOR_PROCESSING:
         msg = INFO_READY_FOR_PROCESSING;
@@ -215,14 +213,12 @@ export default class ImageController implements BaseControllerInterface {
         msg = SUCCESS_GET_IMG_THUMBNAIL;
         break;
     }
-
     return {
       msg: msg,
-      jobStatus: jobStatus
+      jobStatus: jobStatus,
+      thumbnailPath: thumbnailPath
     };
-
   }
-
 
   /**
    * Setup each route to corresponding controller function
