@@ -18,7 +18,7 @@ Simple KVS using Redis
 Local FileSystem 
 ## API
 ### Language
-```NodeJS 10.6.2``` (LTS) with TypeScript ```3.5.3```
+```NodeJS 10.6.2``` (LTS) with ```TypeScript 3.5.3```
 ## Worker
 ### Language
 ```Python3.7```
@@ -46,3 +46,4 @@ Local FileSystem
 * Many optimizations like retry mechanism, etc are omitted due to time constraint
 * API security is not implemented due to time constraint. Normally each end point should be protected by ```JWT``` Access Token
 * Unit tests are implemented and nearly cover 100% of code (except for some parts)
+* Performance tests and benchmarking are not done due to time constraint
