@@ -1,11 +1,9 @@
+import * as fs from "fs";
+import * as util from "util";
 import FileServiceInterface from "../lib/interface/file.service.interface";
 import { FileArray, UploadedFile } from "express-fileupload";
 import { Logger } from "log4js";
-import { SYS_ERR_FILE_UPLOAD }
-from "../lib/constant/constants";
-import * as fs from "fs";
-import * as util from "util";
-
+import { SYS_ERR_FILE_UPLOAD } from "../lib/constant/constants";
 
 /**
  * FileService is a service class that deals with file system
