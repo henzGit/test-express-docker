@@ -1,4 +1,4 @@
-import { param, } from "express-validator";
+import { param } from "express-validator";
 import {NextFunction, Request, Response} from "express";
 import * as HttpCodes from "http-status-codes";
 import { ERR_MSG_NO_FILE } from "../constant/constants";
@@ -14,5 +14,5 @@ export function postImageValidator(req: Request, res: Response, next: NextFuncti
 }
 
 export const getImageValidator = [
-  param('imageId').isString(),
+  param('imageId').isInt(),
 ];

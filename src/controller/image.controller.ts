@@ -12,8 +12,9 @@ import {
   ERR_FILE_UPLOAD,
   ERR_SAVE_IMAGE_INFO_KVS,
   ERR_PUT_JOB_QUEUE
-}
-  from "../lib/constant/constants";
+} from "../lib/constant/constants";
+import { validationResult, Result, ValidationError } from "express-validator";
+
 import KvsServiceInterface from "../lib/interface/kvs.service.interface";
 import FileServiceInterface from "../lib/interface/file.service.interface";
 import QueueServiceInterface from "../lib/interface/queue.service.interface";
@@ -45,6 +46,15 @@ export default class ImageController implements BaseControllerInterface {
    *        imageId:
    *          type: integer
    *          description: The image ID.
+   *   Thumbnail:
+   *      type: object
+   *      properties:
+   *        msg:
+   *          type: string
+   *          description: Successful thumbnail retrieval message.
+   *        jobStatus:
+   *          type: integer
+   *          description: The job status.
    */
 
   /**
@@ -74,10 +84,10 @@ export default class ImageController implements BaseControllerInterface {
    *          description: Error in image creation
    */
   public async postImage(req: Request, res: Response) {
-    this.logger.info("----------------- postImage API --------------");
+    this.logger.info("postImage API");
 
     // Put image file into file storage system
-    this.logger.info("--------------- put image into file storage system ------------");
+    this.logger.info("put image into file storage system");
     // @ts-ignore file is already validated to exist
     const filePath: string = await this.fileService.putImage(req.files);
     if (filePath === SYS_ERR_FILE_UPLOAD) {
@@ -86,7 +96,7 @@ export default class ImageController implements BaseControllerInterface {
     }
 
     // Put image info into kvs server
-    this.logger.info("------------- put image info into kvs server ----------------");
+    this.logger.info("put image info into kvs server");
     const imageId: number = await this.kvsService.putImageInfo(filePath);
     if (imageId === ERR_CODE_MINUS_ONE) {
       res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_SAVE_IMAGE_INFO_KVS);
@@ -94,7 +104,7 @@ export default class ImageController implements BaseControllerInterface {
     }
 
     // Send job to queue
-    this.logger.info("------------- send job to queue ----------------");
+    this.logger.info("send job to queue");
     const statusPutJob: boolean = await this.queueService.putJob(imageId);
     if (!statusPutJob) {
       res.status(HttpCodes.INTERNAL_SERVER_ERROR).send(ERR_PUT_JOB_QUEUE);
@@ -126,19 +136,25 @@ export default class ImageController implements BaseControllerInterface {
    *     responses:
    *       '200':
    *         description: Request successful
+   *         schema:
+   *          $ref: '#/definitions/Thumbnail'
    *       '404':
    *         description: Requested imageId does not exist
+   *       '500':
+   *          description: Error in getting image thumbnail
    */
   public async getImageThumbnail(req: Request, res: Response) {
-    this.logger.info("----------------- getImageThumbnail API --------------");
+    this.logger.info("getImageThumbnail API");
+
+    const errors: Result<ValidationError> = validationResult(req);
 
     // Input validation
-    // const errors: Result<ValidationError> = validationResult(req);
-    // if (!errors.isEmpty()) {
-    //   return res
-    //     .status(HttpCodes.UNPROCESSABLE_ENTITY)
-    //     .json({ errors: errors.array()});
-    // }
+    if (!errors.isEmpty()) {
+      return res.status(HttpCodes.BAD_REQUEST)
+          .json({errors: errors.array()});
+    }
+
+
 
     res.send(SUCCESS_GET_IMG_THUMBNAIL);
   }
