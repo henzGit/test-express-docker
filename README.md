@@ -48,6 +48,30 @@ redis==3.3.7
 pyyaml==5.1.2
 Wand==0.5.6
 ```
+## Code Structure
+```
+config: directory for config YAML files
+dockerfiles: directory for all docker files
+img: 
+    thumbnail: directory to store thumbnail image files
+    uploaded: directory to store original uploaded files
+scripts: directory to store all necessary scripts for booting up application
+src: 
+    controller: directory containing source code for main controllers
+    lib:
+        constant: directory containing all constants used in the appliacation
+        dto: directory containing Data Transfer Object (DTO) for request and response of web server
+        interface: directory containing all interfaces in the application
+        validator: directory containing source code of custom validator logic
+    service: directory containing source code for main services
+test:
+    mock: directory containing custom mock files
+    unit:
+        controller: directory containing unit tests for controller
+        service: directory containing unit tests for services
+worker: directory containing source code of worker (Python3)
+```
+
 
 # Available commands
 - Run system: `docker-compose up`
@@ -73,3 +97,5 @@ Wand==0.5.6
 * API security is not implemented due to time constraint. Normally each end point should be protected by ```JWT``` Access Token
 * Unit tests are implemented and nearly cover 100% of code (except for some parts)
 * Performance tests and benchmarking are not done due to time constraint
+* Only one configuration file is given ```default.yaml``` due to time constraint. Normally we need to have multiple configuration files based on each environment such as staging and production. 
+* ```yarn``` is used instead of ```npm``` for installing node modules 
