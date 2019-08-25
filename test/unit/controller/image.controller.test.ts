@@ -29,10 +29,11 @@ import {
   INFO_ERROR_DURING_PROCESSING,
   INFO_PROCESSING,
   INFO_READY_FOR_PROCESSING,
-  SUCCESS_GET_IMG_THUMBNAIL
+  SUCCESS_GET_IMG_THUMBNAIL,
 } from "../../../src/lib/constant/constants";
-import { SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE }
-  from "../../testConstants";
+import {
+  SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE, EMPTY_STR, THUMBNAIL_PATH
+} from "../../testConstants";
 import { JOB_STATUS } from "../../../src/lib/constant/jobStatus.enum";
 
 import { Server } from "http";
@@ -57,7 +58,8 @@ describe('ImageController', () => {
     let channelMock: ChannelMock;
     let queueConf: Options.Connect;
     let imageId: number;
-    let imageController: BaseControllerInterface;
+    let imageController: ImageController;
+    let imageInfo: string[];
 
     beforeAll(async () => {
       imageId = 1;
@@ -238,25 +240,53 @@ describe('ImageController', () => {
 
     describe('Test getThumbnailRetDtoFromImageInfo(imageInfo: string[])', () => {
       it(`should return ${INFO_READY_FOR_PROCESSING} message when
-        jobStatus is ${JOB_STATUS.READY_FOR_PROCESSING}`,
-          () => {
-
-
+        jobStatus is ${JOB_STATUS.READY_FOR_PROCESSING}`, () => {
+        imageInfo = [String(JOB_STATUS.READY_FOR_PROCESSING), EMPTY_STR];
+        let retDto: object = imageController.getThumbnailRetDtoFromImageInfo(imageInfo);
+        expect(retDto).toStrictEqual({
+              msg: INFO_READY_FOR_PROCESSING,
+              jobStatus: JOB_STATUS.READY_FOR_PROCESSING,
+              thumbnailPath: EMPTY_STR
+          }
+        );
       });
       it(`should return ${INFO_PROCESSING} message when jobStatus is 
-        ${JOB_STATUS.PROCESSING}`,
-            () => {
+        ${JOB_STATUS.PROCESSING}`, () => {
+        imageInfo = [String(JOB_STATUS.PROCESSING), EMPTY_STR];
+        let retDto: object = imageController.getThumbnailRetDtoFromImageInfo(imageInfo);
+        expect(retDto).toStrictEqual({
+              msg: INFO_PROCESSING,
+              jobStatus: JOB_STATUS.PROCESSING,
+              thumbnailPath: EMPTY_STR
+            }
+        );
       });
       it(`should return ${INFO_ERROR_DURING_PROCESSING} message when 
-        jobStatus is ${JOB_STATUS.ERROR_DURING_PROCESSING}`,
-          () => {
+        jobStatus is ${JOB_STATUS.ERROR_DURING_PROCESSING}`, () => {
+        imageInfo = [String(JOB_STATUS.ERROR_DURING_PROCESSING), EMPTY_STR];
+        let retDto: object = imageController.getThumbnailRetDtoFromImageInfo(imageInfo);
+        expect(retDto).toStrictEqual({
+              msg: INFO_ERROR_DURING_PROCESSING,
+              jobStatus: JOB_STATUS.ERROR_DURING_PROCESSING,
+              thumbnailPath: EMPTY_STR
+            }
+        );
       });
       it(`should return ${SUCCESS_GET_IMG_THUMBNAIL} message when 
-        jobStatus is ${JOB_STATUS.COMPLETE}`,
-          () => {
+        jobStatus is ${JOB_STATUS.COMPLETE}`, () => {
+        imageInfo = [String(JOB_STATUS.COMPLETE), THUMBNAIL_PATH];
+        let retDto: object = imageController.getThumbnailRetDtoFromImageInfo(imageInfo);
+        expect(retDto).toStrictEqual({
+              msg: SUCCESS_GET_IMG_THUMBNAIL,
+              jobStatus: JOB_STATUS.COMPLETE,
+              thumbnailPath: THUMBNAIL_PATH
+            }
+        );
+
+
+
+
       });
-
-
     });
 
     afterAll(async () => {
