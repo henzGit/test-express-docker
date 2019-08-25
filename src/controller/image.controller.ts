@@ -15,7 +15,10 @@ import {
   ERR_GET_IMAGE_INFO_KVS,
   INDEX_JOBSTATUS,
   INDEX_THUMBNAILPATH,
-  ERR_NOT_EXIST_IMAGE_ID
+  ERR_NOT_EXIST_IMAGE_ID,
+  INFO_READY_FOR_PROCESSING,
+  INFO_PROCESSING,
+  INFO_ERROR_DURING_PROCESSING,
 } from "../lib/constant/constants";
 import { validationResult, Result, ValidationError } from "express-validator";
 
@@ -23,6 +26,7 @@ import KvsServiceInterface from "../lib/interface/kvs.service.interface";
 import FileServiceInterface from "../lib/interface/file.service.interface";
 import QueueServiceInterface from "../lib/interface/queue.service.interface";
 import { Logger } from "log4js";
+import { JOB_STATUS } from "../lib/constant/jobStatus.enum";
 
 export default class ImageController implements BaseControllerInterface {
   constructor (
@@ -175,18 +179,50 @@ export default class ImageController implements BaseControllerInterface {
       return res;
     }
 
+    // Get return DTO
+    let getThumbnailRetDto: object = this.getThumbnailRetDtoFromImageInfo(imageInfo);
+
     // Fetch image from file storage
+    // Return file to API caller
+
+    res.send(getThumbnailRetDto);
+  }
+
+  /**
+   * Get return DTO given image info
+   * @param imageInfo image info from Redis KVS
+   * @returns DTO response object for Get thumbnail image route
+   */
+  public getThumbnailRetDtoFromImageInfo(imageInfo: string[]): object {
     let jobStatus: number = parseInt(imageInfo[INDEX_JOBSTATUS]);
     let thumbnailPath: string = imageInfo[INDEX_THUMBNAILPATH];
+    let msg: string = "";
+
     this.logger.info(jobStatus);
     this.logger.info(thumbnailPath);
 
+    switch (jobStatus) {
+      case JOB_STATUS.READY_FOR_PROCESSING:
+        msg = INFO_READY_FOR_PROCESSING;
+        break;
+      case JOB_STATUS.PROCESSING:
+        msg = INFO_PROCESSING;
+        break;
+      case JOB_STATUS.ERROR_DURING_PROCESSING:
+        msg = INFO_ERROR_DURING_PROCESSING;
+        break;
+      case JOB_STATUS.COMPLETE:
+        msg = SUCCESS_GET_IMG_THUMBNAIL;
+        break;
+    }
 
-    // Return file to API caller
+    return {
+      msg: msg,
+      jobStatus: jobStatus
+    };
 
-
-    res.send(SUCCESS_GET_IMG_THUMBNAIL);
   }
+
 
   /**
    * Setup each route to corresponding controller function
