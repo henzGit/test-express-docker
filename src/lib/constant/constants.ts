@@ -5,6 +5,7 @@ export const ERR_FILE_UPLOAD = "File upload failed.";
 export const ERR_SAVE_IMAGE_INFO_KVS = "Saving image info failed.";
 export const ERR_GET_IMAGE_INFO_KVS = "Getting image info failed.";
 export const ERR_PUT_JOB_QUEUE = "Sending job failed.";
+export const ERR_NOT_EXIST_IMAGE_ID = "Requested imageId does not exist.";
 
 export const ERR_CODE_MINUS_ONE = -1;
 
@@ -17,3 +18,6 @@ export const SUCCESS_GET_IMG_THUMBNAIL = "Successfully get image thumbnail.";
 export const KVS_KEY_JOB_STATUS = "jobstatus";
 export const KVS_KEY_FILE_PATH = "filepath";
 export const KVS_KEY_THUMBNAIL_PATH = "thumbnailpath";
+
+export const INDEX_JOBSTATUS = 0;
+export const INDEX_THUMBNAILPATH = 1;
