@@ -7,6 +7,7 @@ export const ERR_GET_IMAGE_INFO_KVS = "Getting image info failed.";
 export const ERR_PUT_JOB_QUEUE = "Sending job failed.";
 export const ERR_NOT_EXIST_IMAGE_ID = "Requested imageId does not exist.";
 export const ERR_THUMBNAIL_FILE_PATH_EMPTY = "Thumbnail file path does not exist.";
+export const ERR_THUMBNAIL_FILE_NOT_EXIST = "Thumbnail file does not exist.";
 
 export const ERR_CODE_MINUS_ONE = -1;
 
