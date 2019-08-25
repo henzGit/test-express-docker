@@ -47,7 +47,7 @@ import { Options } from "amqplib";
 
 import { stubObject } from "ts-sinon";
 import { configureAndGetLogger } from "../../testLogging";
-import { createMockFs, redisClientMock } from "../../testUtils";
+import { createMockFs, redisClientMock, imageData } from "../../testUtils";
 
 describe('ImageController', () => {
     let listenedServer: Server;
@@ -199,8 +199,7 @@ describe('ImageController', () => {
           });
       it(`should return a JSON object with the message ${ERR_GET_IMAGE_INFO_KVS}
               and a status code of ${INTERNAL_SERVER_ERROR} if get info from redis
-              server failed`,
-      async () => {
+              server failed`, async () => {
           await listenedServer.close();
           createMockFs();
           logger = configureAndGetLogger();
@@ -240,8 +239,7 @@ describe('ImageController', () => {
         });
       it(`should return a JSON object with the message ${ERR_THUMBNAIL_FILE_PATH_EMPTY}
               and a status code of ${INTERNAL_SERVER_ERROR} if request is successful
-              but thumbnail file path is empty`,
-      async () => {
+              but thumbnail file path is empty`, async () => {
             await listenedServer.close();
             createMockFs();
             logger = configureAndGetLogger();
@@ -280,7 +278,6 @@ describe('ImageController', () => {
                 .expect(INTERNAL_SERVER_ERROR)
                 .expect(ERR_THUMBNAIL_FILE_NOT_EXIST);
           });
-
       it(`should return a JSON object with the message ${INFO_READY_FOR_PROCESSING}
               and a status code of "${OK}" if request is successful`,
       async () => {
@@ -308,12 +305,9 @@ describe('ImageController', () => {
                   })
                 });
           });
-
-
-
-      it.skip(`should return a JSON object with the message ${SUCCESS_GET_IMG_THUMBNAIL}
-              and a status code of "${OK}" if request is successful`,
-          async () => {
+      it(`should return the thumbnail image and a status code of "${OK}" 
+        if request is successful and thumbnail image exists in the file storage`,
+      async () => {
             await listenedServer.close();
             createMockFs();
             logger = configureAndGetLogger();
@@ -321,20 +315,21 @@ describe('ImageController', () => {
                 kvsServiceStub,
                 { getImageInfo: [String(JOB_STATUS.COMPLETE), THUMBNAIL_PATH] }
             );
+            const fileServiceNewStub = stubObject<FileServiceInterface>(
+                fileServiceStub,
+                { checkFileExist: true }
+            );
             const newImageController: ImageController = new ImageController(
-                fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+                fileServiceNewStub , kvsServiceNewStub , queueServiceStub, logger
             );
             testServer = getTestServerByController(newImageController);
             listenedServer = await testServer.getInstance().listen(testServer.getPort());
             agent = supertest.agent(listenedServer);
 
             await agent.get(`/image/${imageId}/thumbnail`)
+                .expect(OK)
                 .expect(res => {
-                  expect(res.body).toEqual({
-                    msg: SUCCESS_GET_IMG_THUMBNAIL,
-                    jobStatus: JOB_STATUS.COMPLETE,
-                    thumbnailPath: THUMBNAIL_PATH
-                  })
+                  expect(imageData.equals(res.body)).toBe(true)
                 });
           });
       });
