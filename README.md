@@ -39,3 +39,4 @@ Python3.7
 * All configuration values (for both API and worker) are located in `default.yaml`
 * Python is chosen for the worker language due to its simplicity and available binding with Image Magick 
 * Many optimizations are omitted due to time constraint
+* API security is not implemented due to time constraint. Normally each end point should be protected by JWT Access Token
