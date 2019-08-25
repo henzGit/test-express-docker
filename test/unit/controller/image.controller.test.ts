@@ -30,6 +30,7 @@ import {
   INFO_PROCESSING,
   INFO_READY_FOR_PROCESSING,
   SUCCESS_GET_IMG_THUMBNAIL,
+  ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS
 } from "../../../src/lib/constant/constants";
 import {
   SRC_IMG, TEST_DIR, DST_IMG, REDIS_INDEX_KEY, TEST_QUEUE, EMPTY_STR, THUMBNAIL_PATH, THROW_ERR_STR
@@ -90,15 +91,15 @@ describe('ImageController', () => {
     });
 
     describe('POST API: "/image"', () => {
-        it(`should return a JSON object with the message "${ERR_MSG_NO_FILE}"
-            and a status code of "${BAD_REQUEST}" if no file is specified`,
+        it(`should return a JSON object with the message ${ERR_MSG_NO_FILE}
+            and a status code of ${BAD_REQUEST} if no file is specified`,
         async () => {
                 await agent.post('/image')
                     .expect(BAD_REQUEST)
                     .expect(ERR_MSG_NO_FILE)
             });
-        it(`should return a JSON object with the message "${SUCCESS_IMG_PROCESSING}"
-              and a status code of "${OK}" if image is successfully processed`,
+        it(`should return a JSON object with the message ${SUCCESS_IMG_PROCESSING}
+              and a status code of ${OK} if image is successfully processed`,
         async () => {
                 // Check API response
                 await agent.post('/image')
@@ -109,8 +110,8 @@ describe('ImageController', () => {
                     msg: SUCCESS_IMG_PROCESSING
                   });
             });
-        it(`should return a JSON object with the message "${ERR_FILE_UPLOAD}"
-                and a status code of "${INTERNAL_SERVER_ERROR}" if something occurs 
+        it(`should return a JSON object with the message ${ERR_FILE_UPLOAD}
+                and a status code of ${INTERNAL_SERVER_ERROR} if something occurs 
                 during file upload`,
         async () => {
               await listenedServer.close();
@@ -131,8 +132,8 @@ describe('ImageController', () => {
                   .expect(INTERNAL_SERVER_ERROR)
                   .expect(ERR_FILE_UPLOAD);
           });
-        it(`should return a JSON object with the message "${ERR_SAVE_IMAGE_INFO_KVS}"
-              and a status code of "${INTERNAL_SERVER_ERROR}" if something occurs 
+        it(`should return a JSON object with the message ${ERR_SAVE_IMAGE_INFO_KVS}
+              and a status code of ${INTERNAL_SERVER_ERROR} if something occurs 
               during saving file info into kvs`,
         async () => {
               await listenedServer.close();
@@ -153,8 +154,8 @@ describe('ImageController', () => {
                   .expect(INTERNAL_SERVER_ERROR)
                   .expect(ERR_SAVE_IMAGE_INFO_KVS);
           });
-        it(`should return a JSON object with the message "${ERR_PUT_JOB_QUEUE}"
-                  and a status code of "${INTERNAL_SERVER_ERROR}" if something occurs 
+        it(`should return a JSON object with the message ${ERR_PUT_JOB_QUEUE}
+                  and a status code of ${INTERNAL_SERVER_ERROR} if something occurs 
                   during putting job into queue server`,
         async () => {
               await listenedServer.close();
@@ -178,8 +179,8 @@ describe('ImageController', () => {
     });
 
     describe('GET API: "/image/{imageId}/thumbnail:"', () => {
-      it(`should return a JSON object with the message "${ERR_PARAM_INVALID_VALUE}"
-              and a status code of "${BAD_REQUEST}" if imageId is not integer`,
+      it(`should return a JSON object with the message ${ERR_PARAM_INVALID_VALUE}
+              and a status code of ${BAD_REQUEST} if imageId is not integer`,
           async () => {
                 const wrongImageId: string = 'fdsfds';
                 await agent.get(`/image/${wrongImageId}/thumbnail`)
@@ -195,8 +196,8 @@ describe('ImageController', () => {
                       });
                     })
           });
-      it(`should return a JSON object with the message "${ERR_GET_IMAGE_INFO_KVS}"
-              and a status code of "${INTERNAL_SERVER_ERROR}" if get info from redis
+      it(`should return a JSON object with the message ${ERR_GET_IMAGE_INFO_KVS}
+              and a status code of ${INTERNAL_SERVER_ERROR} if get info from redis
               server failed`,
       async () => {
           await listenedServer.close();
@@ -216,8 +217,8 @@ describe('ImageController', () => {
                 .expect(INTERNAL_SERVER_ERROR)
                 .expect(ERR_GET_IMAGE_INFO_KVS)
           });
-      it(`should return a JSON object with the message "${ERR_NOT_EXIST_IMAGE_ID}"
-              and a status code of "${NOT_FOUND}" if requested imageId does not exist`,
+      it(`should return a JSON object with the message ${ERR_NOT_EXIST_IMAGE_ID}
+              and a status code of ${NOT_FOUND} if requested imageId does not exist`,
       async () => {
             await listenedServer.close();
             createMockFs();
@@ -236,9 +237,29 @@ describe('ImageController', () => {
                 .expect(NOT_FOUND)
                 .expect(ERR_NOT_EXIST_IMAGE_ID)
         });
-      it(`should return a JSON object with the message "${SUCCESS_GET_IMG_THUMBNAIL}"
-              and a status code of "${OK}" if request is successful`,
+      it(`should return a JSON object with the message ${SUCCESS_GET_IMG_THUMBNAIL}
+              and a status code of ${OK} if request is successful`,
       async () => {
+            await listenedServer.close();
+            createMockFs();
+            logger = configureAndGetLogger();
+            const kvsServiceNewStub = stubObject<KvsServiceInterface>(
+                kvsServiceStub,
+                { getImageInfo: [String(JOB_STATUS.COMPLETE), EMPTY_STR] }
+            );
+            const newImageController: ImageController = new ImageController(
+                fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
+            );
+            testServer = getTestServerByController(newImageController);
+                listenedServer = await testServer.getInstance().listen(testServer.getPort());
+                agent = supertest.agent(listenedServer);
+                await agent.get(`/image/${imageId}/thumbnail`)
+                    .expect(INTERNAL_SERVER_ERROR)
+                    .expect(ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS)
+              });
+      it(`should return a JSON object with the message ${ERR_THUMBNAIL_FILE_PATH_NOT_EXISTS}
+              and a status code of "${INTERNAL_SERVER_ERROR}" if request is successful`,
+          async () => {
             await listenedServer.close();
             createMockFs();
             logger = configureAndGetLogger();
@@ -250,18 +271,22 @@ describe('ImageController', () => {
                 fileServiceStub , kvsServiceNewStub , queueServiceStub, logger
             );
             testServer = getTestServerByController(newImageController);
-                listenedServer = await testServer.getInstance().listen(testServer.getPort());
-                agent = supertest.agent(listenedServer);
-                await agent.get(`/image/${imageId}/thumbnail`)
-                    .expect(OK)
-                    .expect(res => {
-                      expect(res.body).toEqual({
-                        msg: SUCCESS_GET_IMG_THUMBNAIL,
-                        jobStatus: JOB_STATUS.COMPLETE,
-                        thumbnailPath: THUMBNAIL_PATH
-                      })
-                    });
-              });
+            listenedServer = await testServer.getInstance().listen(testServer.getPort());
+            agent = supertest.agent(listenedServer);
+            await agent.get(`/image/${imageId}/thumbnail`)
+                .expect(OK)
+                .expect(res => {
+                  expect(res.body).toEqual({
+                    msg: SUCCESS_GET_IMG_THUMBNAIL,
+                    jobStatus: JOB_STATUS.COMPLETE,
+                    thumbnailPath: THUMBNAIL_PATH
+                  })
+                });
+          });
+
+
+
+
       });
 
     describe('Test getThumbnailRetDtoFromImageInfo(imageInfo: string[])', () => {
