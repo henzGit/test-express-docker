@@ -1,0 +1,68 @@
+version: '3'
+services:
+  queue:
+    container_name: test-rabbitmq
+    image: "rabbitmq:3-management"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - docker_net
+  kvs:
+    container_name: test-redis
+    image: "redis:alpine"
+    ports:
+    - "6379:6379"
+    networks:
+    - docker_net
+  api:
+    container_name: test-server
+    build:
+      context: .
+      dockerfile: dockerfiles/app.Dockerfile
+    volumes:
+    - .:/app
+    - ./img:/img
+    command:
+      - /scripts/wait-for-it.sh
+      - test-redis:6379
+      - --
+      - /scripts/wait-for-it.sh
+      - test-rabbitmq:5672
+      - --
+      - /scripts/start_docker_app.sh
+    depends_on:
+      - kvs
+      - queue
+    restart: on-failure
+    ports:
+    - "3000:3000"
+    networks:
+    - docker_net
+  worker:
+    container_name: test-worker
+    build:
+      context: .
+      dockerfile: dockerfiles/worker.Dockerfile
+    volumes:
+      - ./scripts:/scripts
+      - ./worker:/app
+      - ./config:/config
+      - ./img:/img
+    command:
+      - /scripts/wait-for-it.sh
+      - test-redis:6379
+      - --
+      - /scripts/wait-for-it.sh
+      - test-rabbitmq:5672
+      - --
+      - /scripts/start_docker_worker.sh
+    depends_on:
+      - api
+      - kvs
+      - queue
+    networks:
+      - docker_net
+networks:
+  docker_net:
+    driver: bridge

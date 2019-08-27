@@ -1,2 +1,12 @@
 node_modules/
 coverage/
+dist/
+yarn-error.log
+worker/.idea
+worker/test_celery/__pycache__/
+worker/venv/
+worker/__pycache__/
+*.log
+img/uploaded/*
+img/thumbnail/*
+.idea/
