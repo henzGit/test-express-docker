@@ -1,4 +1,4 @@
 pika==1.1.0
 redis==3.3.7
-pyyaml==5.1.2
+pyyaml==5.4
 Wand==0.5.6
